@@ -1,7 +1,21 @@
-const API =
-  typeof window === 'undefined'
-    ? process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-    : process.env.NEXT_PUBLIC_API_URL || '';
+const PRODUCTION_API_URL = 'https://ai-coaching-platform-api.vercel.app';
+const LOCAL_API_URL = 'http://localhost:8000';
+
+function getApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return LOCAL_API_URL;
+    }
+    return PRODUCTION_API_URL;
+  }
+
+  return process.env.BACKEND_URL || PRODUCTION_API_URL;
+}
 
 const defaultHeaders = {
   'Content-Type': 'application/json'
@@ -59,10 +73,11 @@ export interface RolePlayScenario {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const apiBase = getApiBase();
   let response: Response;
 
   try {
-    response = await fetch(`${API}${path}`, {
+    response = await fetch(`${apiBase}${path}`, {
       ...init,
       headers: {
         ...defaultHeaders,
@@ -71,9 +86,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     });
   } catch {
     throw new Error(
-      API.includes('localhost')
-        ? 'Unable to reach the server. The backend API is not configured for production yet.'
-        : 'Unable to reach the server. Please try again in a moment.'
+      'Unable to reach the server. Please check your internet connection and try again.'
     );
   }
 

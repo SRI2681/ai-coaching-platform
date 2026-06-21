@@ -14,3 +14,4 @@ frontend/.env*.local
 # OS / IDE
 .DS_Store
 *.pem
+.vercel
