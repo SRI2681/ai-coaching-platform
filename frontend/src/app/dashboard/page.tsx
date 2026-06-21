@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AppNav from '@/components/app-nav';
 import { startSession, startAvatarSession, type SessionDebrief } from '@/lib/api';
 
 const CDL_LABELS = ['', 'Foundation', 'Developing', 'Practitioner', 'Advanced', 'Executive'];
@@ -34,11 +35,16 @@ export default function DashboardPage() {
       router.push('/');
       return;
     }
-    setFirstName(localStorage.getItem('first_name') || 'there');
-    setCdl(parseFloat(localStorage.getItem('current_cdl') || '1.0'));
-    setCoachName(localStorage.getItem('coach_name') || 'Alex');
-    setFramework(localStorage.getItem('framework') || 'GROW');
-    setLastDebrief(readLastDebrief());
+    function refreshProfile() {
+      setFirstName(localStorage.getItem('first_name') || 'there');
+      setCdl(parseFloat(localStorage.getItem('current_cdl') || '1.0'));
+      setCoachName(localStorage.getItem('coach_name') || 'Alex');
+      setFramework(localStorage.getItem('framework') || 'GROW');
+      setLastDebrief(readLastDebrief());
+    }
+    refreshProfile();
+    window.addEventListener('focus', refreshProfile);
+    return () => window.removeEventListener('focus', refreshProfile);
   }, [router]);
 
   const cdlBand = Math.min(5, Math.max(1, Math.floor(cdl)));
@@ -111,21 +117,7 @@ export default function DashboardPage() {
 
   return (
     <div className='min-h-screen bg-gray-50'>
-      <nav className='bg-blue-900 text-white px-8 py-4 flex justify-between items-center'>
-        <h1 className='text-xl font-bold'>AI Executive Coach</h1>
-        <div className='flex items-center gap-4'>
-          <span>Welcome, {firstName}</span>
-          <button
-            onClick={() => {
-              localStorage.clear();
-              router.push('/');
-            }}
-            className='text-blue-300 hover:text-white text-sm'
-          >
-            Sign out
-          </button>
-        </div>
-      </nav>
+      <AppNav firstName={firstName} />
 
       <div className='max-w-4xl mx-auto p-8'>
         <div className='bg-white rounded-2xl shadow p-6 mb-6'>

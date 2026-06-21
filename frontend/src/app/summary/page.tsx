@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AppNav from '@/components/app-nav';
 import type { SessionDebrief } from '@/lib/api';
 
 const CDL_LABELS = ['', 'Foundation', 'Developing', 'Practitioner', 'Advanced', 'Executive'];
@@ -57,12 +58,13 @@ export default function SummaryPage() {
 
   return (
     <div className='min-h-screen bg-gray-50'>
-      <nav className='bg-blue-900 text-white px-8 py-4'>
-        <h1 className='text-xl font-bold'>Session Summary</h1>
-        <p className='text-blue-300 text-sm mt-1'>Great work, {firstName}. Here is your debrief.</p>
-      </nav>
+      <AppNav firstName={firstName} />
 
       <div className='max-w-3xl mx-auto p-8 space-y-6'>
+        <div>
+          <h1 className='text-2xl font-bold text-blue-900'>Session Summary</h1>
+          <p className='text-gray-500 mt-1'>Great work, {firstName}. Here is your debrief.</p>
+        </div>
         <div className='bg-white rounded-2xl shadow p-6'>
           <div className='flex flex-wrap items-center justify-between gap-4 mb-4'>
             <div>
