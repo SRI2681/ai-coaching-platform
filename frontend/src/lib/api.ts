@@ -1,4 +1,7 @@
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API =
+  typeof window === 'undefined'
+    ? process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    : process.env.NEXT_PUBLIC_API_URL || '';
 
 const defaultHeaders = {
   'Content-Type': 'application/json'
@@ -56,13 +59,23 @@ export interface RolePlayScenario {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API}${path}`, {
-    ...init,
-    headers: {
-      ...defaultHeaders,
-      ...(init.headers ?? {})
-    }
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${API}${path}`, {
+      ...init,
+      headers: {
+        ...defaultHeaders,
+        ...(init.headers ?? {})
+      }
+    });
+  } catch {
+    throw new Error(
+      API.includes('localhost')
+        ? 'Unable to reach the server. The backend API is not configured for production yet.'
+        : 'Unable to reach the server. Please try again in a moment.'
+    );
+  }
 
   const contentType = response.headers.get('content-type') ?? '';
   const data = contentType.includes('application/json')
