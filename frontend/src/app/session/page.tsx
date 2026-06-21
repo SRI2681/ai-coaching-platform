@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Vapi from '@vapi-ai/web';
-import { endSession } from '../../lib/api';
+import { endSession } from '@/lib/api';
 
 const VAPI_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY ?? '';
 const VAPI_AID = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID ?? '';

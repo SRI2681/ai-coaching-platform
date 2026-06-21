@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { startSession, startAvatarSession } from '../../lib/api';
+import { startSession, startAvatarSession } from '@/lib/api';
 
 export default function DashboardPage() {
   const router = useRouter();

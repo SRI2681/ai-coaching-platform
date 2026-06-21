@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getTeamAnalytics, type TeamAnalytics } from '../../lib/api';
+import { getTeamAnalytics, type TeamAnalytics } from '@/lib/api';
 
 export default function EmployerPage() {
   const [analytics, setAnalytics] = useState<TeamAnalytics | null>(null);
