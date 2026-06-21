@@ -45,18 +45,21 @@ export interface AvatarSessionResponse {
   fallback_reason?: string;
 }
 
+export interface SessionDebrief {
+  summary_text: string;
+  key_win: string;
+  key_gap: string;
+  key_insight: string | null;
+  action_item: string;
+  growth_moment: string | null;
+  cdl_start: number;
+  cdl_end: number;
+  cdl_movement: string;
+  framework?: string;
+}
+
 export interface EndSessionResponse {
-  debrief: {
-    summary_text: string;
-    key_win: string;
-    key_gap: string;
-    key_insight: string | null;
-    action_item: string;
-    growth_moment: string | null;
-    cdl_start: number;
-    cdl_end: number;
-    cdl_movement: string;
-  };
+  debrief: SessionDebrief;
 }
 
 export interface TeamAnalytics {

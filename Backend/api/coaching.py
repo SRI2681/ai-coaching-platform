@@ -169,17 +169,29 @@ class EndRequest(BaseModel):
 async def end_session(session_id: str, req: EndRequest):
     session = (
         supabase.table('coaching_sessions')
-        .select('role,content').eq('session_id', session_id)
-        .order('turn_number').execute().data
+        .select('*').eq('id', session_id).single().execute().data
     )
+    if not session:
+        raise HTTPException(status_code=404, detail='Session not found')
+
+    turns = (
+        supabase.table('conversation_turns')
+        .select('role,content,turn_number')
+        .eq('session_id', session_id)
+        .order('turn_number').execute().data or []
+    )
+
     candidate = (
         supabase.table('candidates')
         .select('current_cdl').eq('id', req.candidate_id).single().execute().data
     )
-    cdl_start    = session.get('cdl_at_start', 1.0)
-    cdl_end      = candidate.get('current_cdl', cdl_start)
-    movement     = get_cdl_movement(cdl_start, cdl_end)
-    framework    = session.get('framework_used', 'GROW')
+    if not candidate:
+        raise HTTPException(status_code=404, detail='Candidate not found')
+
+    cdl_start = session.get('cdl_at_start', 1.0)
+    cdl_end = candidate.get('current_cdl', cdl_start)
+    movement = get_cdl_movement(cdl_start, cdl_end)
+    framework = session.get('framework_used', 'GROW')
     summary_data = generate_session_summary(turns, framework, cdl_start, cdl_end)
     store_session_summary(
         session_id, req.candidate_id,
@@ -189,7 +201,8 @@ async def end_session(session_id: str, req: EndRequest):
         'debrief': {
             **summary_data,
             'cdl_start': cdl_start,
-            'cdl_end':   cdl_end,
-            'cdl_movement': movement
+            'cdl_end': cdl_end,
+            'cdl_movement': movement,
+            'framework': framework,
         }
     }
