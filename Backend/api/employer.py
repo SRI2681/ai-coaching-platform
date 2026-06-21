@@ -3,7 +3,31 @@ from pydantic import BaseModel
 from services.supabase_client import supabase
  
 router = APIRouter()
- 
+
+@router.get('/analytics')
+async def employer_analytics(org_id: str):
+    # Pull ONLY the score column - never names, emails, or transcripts
+    rows = (supabase.table('candidates')
+            .select('current_cdl').eq('org_id', org_id).execute().data)
+    cdls  = [r['current_cdl'] for r in rows if r.get('current_cdl') is not None]
+    total = len(cdls)
+    avg_cdl = round(sum(cdls) / total, 2) if total else 0
+
+    bands = {'1.0-1.9': 0, '2.0-2.9': 0, '3.0-3.9': 0,
+             '4.0-4.9': 0, '5.0': 0}
+    for c in cdls:
+        if   c >= 5.0: bands['5.0']     += 1
+        elif c >= 4.0: bands['4.0-4.9'] += 1
+        elif c >= 3.0: bands['3.0-3.9'] += 1
+        elif c >= 2.0: bands['2.0-2.9'] += 1
+        else:          bands['1.0-1.9'] += 1
+
+    return {
+        'total_leaders':    total,
+        'average_cdl':      avg_cdl,
+        'cdl_distribution': bands
+    }
+
 @router.get('/team-analytics')
 async def get_team_analytics(company_id: str):
     candidates = (

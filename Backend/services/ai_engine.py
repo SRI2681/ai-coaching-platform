@@ -79,7 +79,7 @@ def get_coach_response(messages, candidate, framework, coach_name='Alex',
         model='claude-haiku-4-5-20251001',
         system=system,
         messages=messages,
-        max_tokens=300
+        max_tokens=90      # was 300 - keeps the coach to ~45 words
     )
     if not resp.content:
         return "That's an important point. Can you tell me more about what feels most urgent right now?"
@@ -88,26 +88,23 @@ def get_coach_response(messages, candidate, framework, coach_name='Alex',
 # ── SCORING AGENT ─────────────────────────────────────────────────────────────
 
 SCORE_PROMPT = (
-    'You are an expert executive coaching evaluator. '
-    'Evaluate the candidate response on TWO vectors: '
-    '1. Human Leadership Score (0-100): psychological safety, empathy, clarity, accountability. '
-    '2. Agent/System Leadership Score (0-100): systemic thinking, AI governance, KPI linkage, risk awareness. '
+    'You are an expert executive coaching evaluator trained in the '
+    'ActionCOACH and FocalPoint methodologies. Evaluate the candidate '
+    'response on THREE executive competencies, each scored 0-100: '
+    '1. Strategic Thinking: long-term planning, market awareness, '
+    'finding leverage over daily firefighting. '
+    '2. Operational Accountability: clear timelines, delegation, '
+    'tracking numbers/KPIs, following through on prior promises. '
+    '3. Influence & Communication: clarity, emotional intelligence, '
+    'motivation, alignment with culture. '
     'Framework in use: {framework}. Candidate CDL: {cdl}. '
-    'Return ONLY valid JSON with no other text: '
-    '{{"human_score": 0, "agent_score": 0, '
-    '"critique": "2 sentences max", "nudge": "coaching tip or null", '
-    '"clifton_strength": "strength name if detectable or null"}}'
+    'Return ONLY valid JSON, no other text, no code fences: '
+    '{{"strategic_thinking_score": 0, '
+    '"operational_accountability_score": 0, '
+    '"influence_communication_score": 0, '
+    '"critique": "2 sentences max", '
+    '"nudge": "one coaching tip or null"}}'
 )
-
-CLIFTON_SIGNALS = {
-    'Achiever':       ['accomplish', 'done', 'complete', 'results', 'drive'],
-    'Analytical':     ['data', 'evidence', 'analyse', 'pattern', 'reason'],
-    'Communication':  ['story', 'explain', 'present', 'message', 'articulate'],
-    'Empathy':        ['feel', 'understand', 'care', 'emotion', 'perspective'],
-    'Strategic':      ['strategy', 'direction', 'vision', 'path', 'alternative'],
-    'Relator':        ['relationship', 'trust', 'close', 'friend', 'personal'],
-    'Futuristic':     ['future', 'possibility', 'imagine', 'could be', 'potential'],
-}
 
 def score_response(transcript, framework, cdl, analytics=None):
     prompt = SCORE_PROMPT.format(framework=framework, cdl=round(cdl, 1))
@@ -118,19 +115,14 @@ def score_response(transcript, framework, cdl, analytics=None):
             messages=[{'role': 'user', 'content': transcript}],
             max_tokens=300
         )
-        result = json.loads(resp.content[0].text)
-        if not result.get('clifton_strength') and transcript:
-            tl = transcript.lower()
-            for strength, terms in CLIFTON_SIGNALS.items():
-                if any(t in tl for t in terms):
-                    result['clifton_strength'] = strength
-                    break
-        return result
+        return json.loads(resp.content[0].text)
     except Exception:
         return {
-            'human_score': 70, 'agent_score': 70,
+            'strategic_thinking_score': 70,
+            'operational_accountability_score': 70,
+            'influence_communication_score': 70,
             'critique': 'Score unavailable for this turn.',
-            'nudge': None, 'clifton_strength': None
+            'nudge': None
         }
     
     # ── MEMORY AGENT — SESSION SUMMARY ───────────────────────────────────────────

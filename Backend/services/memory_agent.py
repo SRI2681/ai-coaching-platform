@@ -39,9 +39,11 @@ def load_session_context(session_id: str, limit=20) -> dict:
  
  
 def store_turn(session_id, candidate_id, turn_number, role, content,
-               cdl_at_turn=None, human_score=None, agent_score=None,
-               composite_score=None, word_count=None, nudge=None,
-               clifton_strength=None):
+               cdl_at_turn=None, composite_score=None, word_count=None,
+               nudge=None,
+               strategic_thinking_score=None,
+               operational_accountability_score=None,
+               influence_communication_score=None):
     supabase.table('conversation_turns').insert({
         'session_id':       session_id,
         'candidate_id':     candidate_id,
@@ -49,12 +51,12 @@ def store_turn(session_id, candidate_id, turn_number, role, content,
         'role':             role,
         'content':          content,
         'cdl_at_turn':      cdl_at_turn,
-        'human_score':      human_score,
-        'agent_score':      agent_score,
         'composite_score':  composite_score,
         'word_count':       word_count,
         'nudge_triggered':  nudge,
-        'clifton_strength': clifton_strength,
+        'strategic_thinking_score':         strategic_thinking_score,
+        'operational_accountability_score': operational_accountability_score,
+        'influence_communication_score':    influence_communication_score,
     }).execute()
  
  
