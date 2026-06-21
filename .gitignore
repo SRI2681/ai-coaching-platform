@@ -1,0 +1,16 @@
+# Python
+Backend/venv/
+Backend/__pycache__/
+Backend/.env
+*.pyc
+__pycache__/
+
+# Node.js
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/.env*.local
+
+# OS / IDE
+.DS_Store
+*.pem
