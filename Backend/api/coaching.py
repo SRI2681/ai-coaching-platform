@@ -155,6 +155,8 @@ async def start_avatar_session(req: StartRequest):
         'conversation_url': avatar.get('conversation_url'),
         'fallback_mode':    avatar['fallback_mode']
     }
+    if avatar.get('persona_id'):
+        response['persona_id'] = avatar['persona_id']
     if 'fallback_reason' in avatar:
         response['fallback_reason'] = avatar['fallback_reason']
     return response

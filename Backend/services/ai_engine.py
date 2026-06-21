@@ -220,14 +220,6 @@ def create_avatar_session(candidate_name, coach_name, framework, session_id):
         resp = create_tavus_conversation(payload)
         data = resp.json()
 
-        if resp.status_code == 400 and 'Invalid persona_id' in (data.get('error') or data.get('message') or ''):
-            fallback_persona = fetch_fallback_tavus_persona()
-            if fallback_persona and fallback_persona != persona_id:
-                logger.warning('Configured Tavus persona_id %s invalid; retrying with fallback persona %s.', persona_id, fallback_persona)
-                payload['persona_id'] = fallback_persona
-                resp = create_tavus_conversation(payload)
-                data = resp.json()
-
         if resp.status_code >= 400:
             error_details = data.get('error') or data.get('message') or json.dumps(data)
             logger.error(
@@ -279,6 +271,7 @@ def create_avatar_session(candidate_name, coach_name, framework, session_id):
         return {
             'conversation_id':  conversation_id,
             'conversation_url': conversation_url,
+            'persona_id':       persona_id,
             'fallback_mode':    False
         }
     except Exception as exc:
