@@ -22,7 +22,7 @@ function readDebrief(): SessionDebrief | null {
   }
 }
 
-export default function SessionSummary() {
+export default function SummaryPage() {
   const router = useRouter();
   const [debrief, setDebrief] = useState<SessionDebrief | null>(null);
   const [firstName, setFirstName] = useState('');
@@ -77,7 +77,9 @@ export default function SessionSummary() {
             </span>
           </div>
           {debrief.framework && (
-            <p className='text-sm text-gray-500'>Framework used: <span className='font-medium text-gray-800'>{debrief.framework}</span></p>
+            <p className='text-sm text-gray-500'>
+              Framework used: <span className='font-medium text-gray-800'>{debrief.framework}</span>
+            </p>
           )}
           <p className='mt-4 text-gray-700 leading-relaxed'>{debrief.summary_text}</p>
         </div>
