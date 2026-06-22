@@ -64,7 +64,7 @@ export default function DashboardPage() {
       localStorage.setItem('framework', result.framework);
       localStorage.setItem('coach_opening', result.coach_opening);
       localStorage.setItem('session_type', 'voice');
-      localStorage.removeItem('conversation_url');
+      localStorage.removeItem('anam_session_token');
       localStorage.removeItem('fallback_mode');
       localStorage.removeItem('fallback_reason');
       router.push('/session');
@@ -86,7 +86,7 @@ export default function DashboardPage() {
       }
 
       const result = await startAvatarSession(cid);
-      const useVoiceFallback = result.fallback_mode || !result.conversation_url;
+      const useVoiceFallback = result.fallback_mode || !result.session_token;
 
       localStorage.setItem('session_id', result.session_id);
       localStorage.setItem('framework', result.framework);
@@ -94,10 +94,10 @@ export default function DashboardPage() {
       localStorage.setItem('current_cdl', String(result.current_cdl));
       localStorage.setItem('fallback_mode', useVoiceFallback ? 'true' : 'false');
 
-      if (result.conversation_url) {
-        localStorage.setItem('conversation_url', result.conversation_url);
+      if (result.session_token) {
+        localStorage.setItem('anam_session_token', result.session_token);
       } else {
-        localStorage.removeItem('conversation_url');
+        localStorage.removeItem('anam_session_token');
       }
 
       if (result.fallback_reason) {

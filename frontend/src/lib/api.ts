@@ -40,9 +40,10 @@ export interface AvatarSessionResponse {
   session_id: string;
   framework: string;
   current_cdl: number;
-  conversation_url: string | null;
+  session_token: string | null;
   fallback_mode: boolean;
   fallback_reason?: string;
+  persona_id?: string;
 }
 
 export interface SessionDebrief {

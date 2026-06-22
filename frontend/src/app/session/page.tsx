@@ -4,10 +4,12 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Vapi from '@vapi-ai/web';
+import { createClient } from '@anam-ai/js-sdk';
 import { endSession } from '@/lib/api';
 
 const VAPI_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY ?? '';
 const VAPI_AID = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID ?? '';
+const ANAM_VIDEO_ID = 'anam-coach-video';
 
 interface TurnScores {
   strategic: number | null;
@@ -19,9 +21,11 @@ interface TurnScores {
 export default function SessionPage() {
   const router = useRouter();
   const vapiRef = useRef<Vapi | null>(null);
+  const anamRef = useRef<ReturnType<typeof createClient> | null>(null);
 
   const [sessionType, setSessionType] = useState('voice');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [anamToken, setAnamToken] = useState('');
+  const [showAnamAvatar, setShowAnamAvatar] = useState(false);
   const [fallback, setFallback] = useState(false);
   const [fallbackReason, setFallbackReason] = useState('');
   const [framework, setFramework] = useState('GROW');
@@ -125,16 +129,17 @@ export default function SessionPage() {
     setCdl(parseFloat(localStorage.getItem('current_cdl') || '1.0'));
 
     if (type === 'avatar') {
-      const url = localStorage.getItem('conversation_url') || '';
-      const isFallback = localStorage.getItem('fallback_mode') === 'true' || !url;
+      const token = localStorage.getItem('anam_session_token') || '';
+      const isFallback = localStorage.getItem('fallback_mode') === 'true' || !token;
       const reason = localStorage.getItem('fallback_reason') || '';
 
-      setAvatarUrl(url);
+      setAnamToken(token);
       setFallback(isFallback);
       setFallbackReason(reason);
 
-      if (!isFallback && url) {
-        setStatus('Avatar session active — speak to your coach');
+      if (!isFallback && token) {
+        setShowAnamAvatar(true);
+        setStatus('Connecting to avatar coach...');
         return;
       }
 
@@ -152,10 +157,50 @@ export default function SessionPage() {
     };
   }, [router, startVoice]);
 
+  useEffect(() => {
+    if (!showAnamAvatar || !anamToken) return;
+
+    let cancelled = false;
+
+    async function startAnam() {
+      try {
+        const client = createClient(anamToken);
+        anamRef.current = client;
+        await client.streamToVideoElement(ANAM_VIDEO_ID);
+        if (!cancelled) {
+          setStatus('Avatar session active — speak to your coach');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Unable to start avatar session.');
+          setStatus('Avatar unavailable');
+          setShowAnamAvatar(false);
+          setFallback(true);
+
+          const candidateId = localStorage.getItem('candidate_id');
+          const sessionId = localStorage.getItem('session_id');
+          if (candidateId && sessionId) {
+            startVoice(candidateId, sessionId);
+          }
+        }
+      }
+    }
+
+    startAnam();
+
+    return () => {
+      cancelled = true;
+      anamRef.current?.stopStreaming();
+      anamRef.current = null;
+    };
+  }, [showAnamAvatar, anamToken, startVoice]);
+
   async function handleEndSession() {
     setEnding(true);
     setError('');
     vapiRef.current?.stop();
+    anamRef.current?.stopStreaming();
+    anamRef.current = null;
 
     try {
       const sessionId = localStorage.getItem('session_id');
@@ -174,7 +219,7 @@ export default function SessionPage() {
 
       localStorage.removeItem('session_id');
       localStorage.removeItem('session_type');
-      localStorage.removeItem('conversation_url');
+      localStorage.removeItem('anam_session_token');
       localStorage.removeItem('fallback_mode');
       localStorage.removeItem('fallback_reason');
       localStorage.removeItem('coach_opening');
@@ -185,7 +230,7 @@ export default function SessionPage() {
     }
   }
 
-  const showAvatar = sessionType === 'avatar' && avatarUrl && !fallback;
+  const showAvatar = sessionType === 'avatar' && showAnamAvatar && !fallback;
   const hasScores =
     scores.strategic !== null ||
     scores.operational !== null ||
@@ -229,11 +274,11 @@ export default function SessionPage() {
       <div className='flex-1 flex flex-col lg:flex-row'>
         <div className='flex-1 flex items-center justify-center p-8'>
           {showAvatar ? (
-            <iframe
-              src={avatarUrl}
-              title='AI Coach Avatar'
-              className='w-full max-w-3xl aspect-video rounded-2xl shadow-2xl border border-gray-700'
-              allow='camera; microphone; fullscreen; autoplay; display-capture'
+            <video
+              id={ANAM_VIDEO_ID}
+              autoPlay
+              playsInline
+              className='w-full max-w-3xl aspect-video rounded-2xl shadow-2xl border border-gray-700 bg-black object-cover'
             />
           ) : (
             <div className='text-center'>

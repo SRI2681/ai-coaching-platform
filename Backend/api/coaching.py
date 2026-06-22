@@ -143,17 +143,13 @@ async def start_avatar_session(req: StartRequest):
         candidate.get('coach_name', 'Alex'),
         framework, session_id
     )
-    if not avatar['fallback_mode']:
-        supabase.table('coaching_sessions').update({
-            'tavus_conversation_id': avatar['conversation_id']
-        }).eq('id', session_id).execute()
- 
+
     response = {
-        'session_id':       session_id,
-        'framework':        framework,
-        'current_cdl':      candidate['current_cdl'],
-        'conversation_url': avatar.get('conversation_url'),
-        'fallback_mode':    avatar['fallback_mode']
+        'session_id':    session_id,
+        'framework':     framework,
+        'current_cdl':   candidate['current_cdl'],
+        'session_token': avatar.get('session_token'),
+        'fallback_mode': avatar['fallback_mode'],
     }
     if avatar.get('persona_id'):
         response['persona_id'] = avatar['persona_id']

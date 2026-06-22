@@ -6,39 +6,22 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 client        = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
-TAVUS_API_KEY = os.getenv('TAVUS_API_KEY')
-TAVUS_PERSONA = os.getenv('TAVUS_PERSONA_ID') or os.getenv('TAVUS_PERSONA')
+ANAM_API_KEY = os.getenv('ANAM_API_KEY')
+ANAM_PERSONA_ID = os.getenv('ANAM_PERSONA_ID')
 
 
-def fetch_fallback_tavus_persona():
-    if not TAVUS_API_KEY:
-        return None
-    try:
-        resp = httpx.get(
-            'https://tavusapi.com/v2/personas?limit=1',
-            headers={'x-api-key': TAVUS_API_KEY, 'Content-Type': 'application/json'},
-            timeout=10.0
-        )
-        if resp.status_code != 200:
-            logger.warning('Unable to fetch fallback Tavus persona list: status=%s', resp.status_code)
-            return None
-        data = resp.json()
-        if isinstance(data, dict) and isinstance(data.get('data'), list) and data['data']:
-            return data['data'][0].get('persona_id')
-    except Exception:
-        logger.exception('Failed to fetch fallback Tavus persona list')
-    return None
-
-
-def create_tavus_conversation(payload):
+def create_anam_session_token(persona_id: str, system_prompt: str | None = None) -> httpx.Response:
+    persona_config = {'personaId': persona_id}
+    if system_prompt:
+        persona_config['systemPrompt'] = system_prompt
     return httpx.post(
-        'https://tavusapi.com/v2/conversations',
+        'https://api.anam.ai/v1/auth/session-token',
         headers={
-            'x-api-key': TAVUS_API_KEY,
-            'Content-Type': 'application/json'
+            'Authorization': f'Bearer {ANAM_API_KEY}',
+            'Content-Type': 'application/json',
         },
-        json=payload,
-        timeout=10.0
+        json={'personaConfig': persona_config},
+        timeout=15.0,
     )
 
 # ── COACHING AGENT ────────────────────────────────────────────────────────────
@@ -183,96 +166,54 @@ def create_avatar_session(candidate_name, coach_name, framework, session_id):
         candidate_name=candidate_name
     )
 
-    if not TAVUS_API_KEY or not TAVUS_PERSONA:
-        logger.error('Tavus configuration missing: TAVUS_API_KEY=%s, TAVUS_PERSONA=%s',
-                     bool(TAVUS_API_KEY), bool(TAVUS_PERSONA))
-        return {'conversation_id': None, 'conversation_url': None, 'fallback_mode': True}
+    if not ANAM_API_KEY or not ANAM_PERSONA_ID:
+        logger.error(
+            'Anam configuration missing: ANAM_API_KEY=%s, ANAM_PERSONA_ID=%s',
+            bool(ANAM_API_KEY), bool(ANAM_PERSONA_ID)
+        )
+        return {'session_token': None, 'fallback_mode': True}
 
     try:
-        persona_id = TAVUS_PERSONA
-        if not persona_id:
-            persona_id = fetch_fallback_tavus_persona()
-            logger.warning('Using fallback Tavus persona_id %s because env var was not set.', persona_id)
-
-        if not persona_id:
-            return {
-                'conversation_id': None,
-                'conversation_url': None,
-                'fallback_mode': True,
-                'fallback_reason': 'Tavus persona_id is not configured and no fallback persona was available.'
-            }
-
-        payload = {
-            'persona_id':             persona_id,
-            'conversation_name':      f'Coaching session {session_id}',
-            'custom_greeting':        f'Hello {candidate_name}, I am {coach_name}. Ready to begin?',
-            'conversational_context': persona_prompt
-        }
-
-        resp = create_tavus_conversation(payload)
-        data = resp.json()
+        resp = create_anam_session_token(ANAM_PERSONA_ID, persona_prompt)
+        data = resp.json() if resp.content else {}
 
         if resp.status_code >= 400:
-            error_details = data.get('error') or data.get('message') or json.dumps(data)
+            error_details = data.get('message') or data.get('error') or json.dumps(data)
             logger.error(
-                'Tavus conversation creation failed: status=%s response=%s',
+                'Anam session token creation failed: status=%s response=%s',
                 resp.status_code,
-                error_details
+                error_details,
             )
             return {
-                'conversation_id': None,
-                'conversation_url': None,
+                'session_token': None,
                 'fallback_mode': True,
-                'fallback_reason': f'Tavus error: {error_details}'
+                'fallback_reason': f'Anam error: {error_details}',
             }
 
-        def extract_field(source, *keys):
-            for key in keys:
-                if key in source and source[key]:
-                    return source[key]
-            return None
-
-        conversation_id = extract_field(data, 'conversation_id', 'conversationId', 'id')
-        conversation_url = extract_field(
-            data,
-            'conversation_url', 'conversationUrl', 'url', 'conversation_url', 'conversationUrl'
-        )
-
-        if not conversation_id or not conversation_url:
-            nested = data.get('conversation') if isinstance(data.get('conversation'), dict) else None
-            if nested:
-                conversation_id = conversation_id or extract_field(nested, 'conversation_id', 'conversationId', 'id')
-                conversation_url = conversation_url or extract_field(
-                    nested,
-                    'conversation_url', 'conversationUrl', 'url'
-                )
-
-        if not conversation_id or not conversation_url:
+        session_token = data.get('sessionToken') or data.get('session_token')
+        if not session_token:
             logger.error(
-                'Tavus response missing conversation data: status=%s response=%s',
+                'Anam response missing sessionToken: status=%s response=%s',
                 resp.status_code,
-                json.dumps(data)
+                json.dumps(data),
             )
             return {
-                'conversation_id': None,
-                'conversation_url': None,
+                'session_token': None,
                 'fallback_mode': True,
-                'fallback_reason': 'Tavus response missing conversation_id or conversation_url'
+                'fallback_reason': 'Anam response missing sessionToken',
             }
 
         return {
-            'conversation_id':  conversation_id,
-            'conversation_url': conversation_url,
-            'persona_id':       persona_id,
-            'fallback_mode':    False
+            'session_token': session_token,
+            'persona_id': ANAM_PERSONA_ID,
+            'fallback_mode': False,
         }
     except Exception as exc:
-        logger.exception('Failed to create Tavus conversation for session %s', session_id)
+        logger.exception('Failed to create Anam session for %s', session_id)
         return {
-            'conversation_id': None,
-            'conversation_url': None,
+            'session_token': None,
             'fallback_mode': True,
-            'fallback_reason': str(exc)
+            'fallback_reason': str(exc),
         }
 
 # ── FRAMEWORK SELECTOR SKILL ──────────────────────────────────────────────────
