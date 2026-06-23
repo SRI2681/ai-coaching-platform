@@ -124,7 +124,7 @@ export default function SkillCheckPage() {
         <h1 className='text-2xl font-bold text-blue-900 mb-1'>Goal Skill Check</h1>
         <p className='text-gray-500 mb-1'>Goal: {goalTitle}</p>
         <p className='text-sm text-gray-400 mb-6'>
-          GMAT-style adaptive test measuring skill growth toward your goal since baseline.
+          Adaptive check measuring skill growth toward your goal since baseline.
         </p>
 
         {error && (
@@ -192,8 +192,8 @@ export default function SkillCheckPage() {
         ) : (
           <div className='bg-white rounded-2xl shadow p-6 space-y-4'>
             <p className='text-gray-600 text-sm'>
-              Choose a progress test. Questions adapt to your answers like a GMAT — harder when
-              you demonstrate mastery, targeted when gaps remain.
+              Choose a progress test. Questions adapt to your answers — harder when you
+              demonstrate mastery, targeted when gaps remain.
             </p>
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
               <button

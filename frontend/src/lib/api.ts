@@ -166,6 +166,12 @@ export async function endSession(
   });
 }
 
+export async function getLatestSessionSummary(candidateId: string) {
+  return request<EndSessionResponse>(
+    `/api/coaching/sessions/latest-summary/${encodeURIComponent(candidateId)}`
+  );
+}
+
 export async function updateSessionCallMeta(
   sessionId: string,
   data: { vapi_call_id?: string; recording_url?: string }

@@ -24,7 +24,6 @@ export default function DashboardPage() {
   const [firstName, setFirstName] = useState('');
   const [cdl, setCdl] = useState(1.0);
   const [coachName, setCoachName] = useState('Alex');
-  const [framework, setFramework] = useState('GROW');
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
   const [lastDebrief, setLastDebrief] = useState<SessionDebrief | null>(null);
@@ -39,7 +38,6 @@ export default function DashboardPage() {
       setFirstName(localStorage.getItem('first_name') || 'there');
       setCdl(parseFloat(localStorage.getItem('current_cdl') || '1.0'));
       setCoachName(localStorage.getItem('coach_name') || 'Alex');
-      setFramework(localStorage.getItem('framework') || 'GROW');
       setLastDebrief(readLastDebrief());
     }
     refreshProfile();
@@ -133,7 +131,7 @@ export default function DashboardPage() {
               <p className='text-lg font-semibold text-gray-800'>
                 CDL {cdl.toFixed(1)} — {CDL_LABELS[cdlBand]}
               </p>
-              <p className='text-gray-500 text-sm'>Coach: {coachName} · Framework: {framework}</p>
+              <p className='text-gray-500 text-sm'>Coach: {coachName}</p>
             </div>
           </div>
         </div>
@@ -167,7 +165,7 @@ export default function DashboardPage() {
               className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
             >
               <p className='font-semibold text-gray-800'>4. Skill Check</p>
-              <p className='text-xs text-gray-500 mt-1'>GMAT-style progress test</p>
+              <p className='text-xs text-gray-500 mt-1'>Adaptive progress check</p>
             </button>
             <button
               onClick={() => router.push('/progress')}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AppNav from '@/components/app-nav';
-import type { SessionDebrief } from '@/lib/api';
+import { getLatestSessionSummary, type SessionDebrief } from '@/lib/api';
 
 const CDL_LABELS = ['', 'Foundation', 'Developing', 'Practitioner', 'Advanced', 'Executive'];
 
@@ -13,7 +13,7 @@ function movementLabel(movement: string): { text: string; color: string } {
   return { text: 'Held steady', color: 'text-blue-700 bg-blue-100' };
 }
 
-function readDebrief(): SessionDebrief | null {
+function readLocalDebrief(): SessionDebrief | null {
   const raw = localStorage.getItem('debrief') || localStorage.getItem('last_debrief');
   if (!raw) return null;
   try {
@@ -27,6 +27,8 @@ export default function SummaryPage() {
   const router = useRouter();
   const [debrief, setDebrief] = useState<SessionDebrief | null>(null);
   const [firstName, setFirstName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [empty, setEmpty] = useState(false);
 
   useEffect(() => {
     const cid = localStorage.getItem('candidate_id');
@@ -35,20 +37,53 @@ export default function SummaryPage() {
       return;
     }
     setFirstName(localStorage.getItem('first_name') || 'there');
-    const data = readDebrief();
-    if (!data) {
-      router.push('/dashboard');
+
+    const local = readLocalDebrief();
+    if (local) {
+      setDebrief(local);
+      localStorage.setItem('last_debrief', JSON.stringify(local));
+      localStorage.removeItem('debrief');
+      setLoading(false);
       return;
     }
-    setDebrief(data);
-    localStorage.setItem('last_debrief', JSON.stringify(data));
-    localStorage.removeItem('debrief');
+
+    getLatestSessionSummary(cid)
+      .then((result) => {
+        if (result.debrief) {
+          setDebrief(result.debrief);
+          localStorage.setItem('last_debrief', JSON.stringify(result.debrief));
+        } else {
+          setEmpty(true);
+        }
+      })
+      .catch(() => setEmpty(true))
+      .finally(() => setLoading(false));
   }, [router]);
 
-  if (!debrief) {
+  if (loading) {
     return (
       <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
         <p className='text-gray-500'>Loading your session summary...</p>
+      </div>
+    );
+  }
+
+  if (empty || !debrief) {
+    return (
+      <div className='min-h-screen bg-gray-50'>
+        <AppNav firstName={firstName} />
+        <div className='max-w-xl mx-auto p-8 text-center'>
+          <h1 className='text-2xl font-bold text-blue-900 mb-2'>Session Summary</h1>
+          <p className='text-gray-500 mb-6'>
+            Complete a coaching session to see your debrief here.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className='bg-blue-700 hover:bg-blue-800 text-white rounded-lg px-6 py-3 font-semibold'
+          >
+            Start a session
+          </button>
+        </div>
       </div>
     );
   }
@@ -78,12 +113,7 @@ export default function SummaryPage() {
               {movement.text}
             </span>
           </div>
-          {debrief.framework && (
-            <p className='text-sm text-gray-500'>
-              Framework used: <span className='font-medium text-gray-800'>{debrief.framework}</span>
-            </p>
-          )}
-          <p className='mt-4 text-gray-700 leading-relaxed'>{debrief.summary_text}</p>
+          <p className='text-gray-700 leading-relaxed'>{debrief.summary_text}</p>
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>

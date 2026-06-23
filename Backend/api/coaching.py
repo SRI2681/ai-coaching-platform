@@ -315,3 +315,38 @@ async def end_session(session_id: str, req: EndRequest):
             'framework': framework,
         }
     }
+
+
+@router.get('/sessions/latest-summary/{candidate_id}')
+async def latest_session_summary(candidate_id: str):
+    rows = (
+        supabase.table('session_summaries')
+        .select(
+            'summary_text, key_win, key_gap, key_insight, action_item, growth_moment, '
+            'cdl_at_start, cdl_at_end, cdl_movement, framework_used, created_at'
+        )
+        .eq('candidate_id', candidate_id)
+        .order('created_at', desc=True)
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail='No session summary found yet.')
+    row = rows[0]
+    return {
+        'debrief': {
+            'summary_text': row.get('summary_text') or '',
+            'key_win': row.get('key_win') or '',
+            'key_gap': row.get('key_gap') or '',
+            'key_insight': row.get('key_insight'),
+            'action_item': row.get('action_item') or '',
+            'growth_moment': row.get('growth_moment'),
+            'cdl_start': row.get('cdl_at_start') or 1.0,
+            'cdl_end': row.get('cdl_at_end') or 1.0,
+            'cdl_movement': row.get('cdl_movement') or 'held',
+            'framework': row.get('framework_used'),
+            'completed_at': row.get('created_at'),
+        }
+    }

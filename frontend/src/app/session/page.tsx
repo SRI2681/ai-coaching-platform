@@ -264,9 +264,7 @@ export default function SessionPage() {
         <div className='flex items-center gap-6'>
           <div>
             <h1 className='text-xl font-bold'>Live Coaching Session</h1>
-            <p className='text-blue-300 text-xs mt-0.5'>
-              {framework} framework · {sessionType} mode
-            </p>
+            <p className='text-blue-300 text-xs mt-0.5 capitalize'>{sessionType} session</p>
           </div>
           <div className='hidden sm:flex gap-4 text-sm'>
             <Link href='/dashboard' className='text-blue-300 hover:text-white'>

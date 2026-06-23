@@ -227,7 +227,6 @@ export default function BaselineAssessmentPage() {
         <h1 className='text-2xl font-bold text-blue-900 mb-1'>Baseline Skill Assessment</h1>
         <p className='text-gray-500 mb-1'>Goal: {goalTitle}</p>
         <p className='text-sm text-gray-400 mb-6'>
-          One-time diagnostic combining CliftonStrengths, DISC, and executive competencies.
           {!baselineLocked && (
             <> Question {Math.min(progress, questionTotal)} of {questionTotal} · Tier {tier}</>
           )}
