@@ -29,7 +29,9 @@ def create_anam_session_token(persona_id: str, system_prompt: str | None = None)
 COACH_PERSONA = (
     'You are {name}, an executive coach with 20 years of experience coaching '
     '{role} leaders at enterprise organizations. '
-    'You use the {framework} coaching framework. '
+    'You use the {framework} coaching framework. {framework_hint} '
+    'Baseline context: level {baseline_level}, strengths: {baseline_strengths}, '
+    'development gaps: {baseline_gaps}. '
     'You are coaching {candidate}. '
     'Be direct, warm, and ask one powerful open question per turn. '
     'Maximum 120 words. Always end with a question. Never break character. '
@@ -43,14 +45,19 @@ COACH_PERSONA = (
 )
 
 def get_coach_response(messages, candidate, framework, coach_name='Alex',
-                       nudge=None, cdl=1.0):
+                       nudge=None, cdl=1.0, baseline=None):
     nudge_instruction = (
         f'NUDGE: Weave this naturally into your response without stating it directly: {nudge}'
         if nudge else ''
     )
+    bl = baseline or {}
     system = COACH_PERSONA.format(
         name=coach_name,
         framework=framework,
+        framework_hint=framework_coaching_hint(framework),
+        baseline_level=bl.get('level', 'not yet assessed'),
+        baseline_strengths=', '.join(bl.get('strengths') or []) or 'pending',
+        baseline_gaps=', '.join(bl.get('gaps') or []) or 'pending',
         candidate=candidate.get('first_name', 'there'),
         role=candidate.get('role_title', 'leader'),
         cdl=round(cdl, 1),
@@ -216,17 +223,4 @@ def create_avatar_session(candidate_name, coach_name, framework, session_id):
             'fallback_reason': str(exc),
         }
 
-# ── FRAMEWORK SELECTOR SKILL ──────────────────────────────────────────────────
-
-def select_framework(role_level, primary_goal, current_cdl,
-                     employer_override=None):
-    if employer_override:
-        return employer_override
-    if role_level in ['c-suite', 'vp']:
-        return 'Goldsmith'
-    goal_lower = (primary_goal or '').lower()
-    if 'revenue' in goal_lower or 'scale' in goal_lower:
-        return 'ActionCOACH'
-    if role_level == 'director' and 'kpi' in goal_lower:
-        return 'MAP'
-    return 'GROW'
+from services.framework_selector import framework_coaching_hint, select_framework

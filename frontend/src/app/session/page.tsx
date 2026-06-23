@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Vapi from '@vapi-ai/web';
 import { createClient } from '@anam-ai/js-sdk';
-import { endSession } from '@/lib/api';
+import { endSession, updateSessionCallMeta } from '@/lib/api';
 
 const VAPI_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY ?? '';
 const VAPI_AID = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID ?? '';
@@ -22,6 +22,8 @@ export default function SessionPage() {
   const router = useRouter();
   const vapiRef = useRef<Vapi | null>(null);
   const anamRef = useRef<ReturnType<typeof createClient> | null>(null);
+  const vapiCallIdRef = useRef('');
+  const recordingUrlRef = useRef('');
 
   const [sessionType, setSessionType] = useState('voice');
   const [anamToken, setAnamToken] = useState('');
@@ -57,7 +59,14 @@ export default function SessionPage() {
     const vapi = new Vapi(VAPI_KEY);
     vapiRef.current = vapi;
 
-    vapi.on('call-start', () => setStatus('Session active — start speaking'));
+    vapi.on('call-start', (event?: { id?: string; call?: { id?: string } }) => {
+      setStatus('Session active — start speaking');
+      const callId = event?.id || event?.call?.id || '';
+      if (callId) {
+        vapiCallIdRef.current = callId;
+        updateSessionCallMeta(sessionId, { vapi_call_id: callId }).catch(() => undefined);
+      }
+    });
     vapi.on('call-end', () => setStatus('Session ended'));
     vapi.on('speech-start', () => setIsListening(true));
     vapi.on('speech-end', () => setIsListening(false));
@@ -67,6 +76,9 @@ export default function SessionPage() {
       transcriptType?: string;
       transcript?: string;
       content?: string;
+      call?: { id?: string };
+      recordingUrl?: string;
+      artifact?: { recordingUrl?: string };
       toolCallsResult?: Array<{
         result?: {
           strategic_thinking_score?: number;
@@ -77,6 +89,11 @@ export default function SessionPage() {
         };
       }>;
     }) => {
+      if (msg.type === 'end-of-call-report') {
+        const url = msg.recordingUrl || msg.artifact?.recordingUrl;
+        if (url) recordingUrlRef.current = url;
+        if (msg.call?.id) vapiCallIdRef.current = msg.call.id;
+      }
       if (msg.type === 'transcript' && msg.transcriptType === 'final' && msg.transcript) {
         setTranscript(msg.transcript);
       }
@@ -210,7 +227,12 @@ export default function SessionPage() {
         return;
       }
 
-      const result = await endSession(sessionId, candidateId);
+      const result = await endSession(
+        sessionId,
+        candidateId,
+        recordingUrlRef.current || undefined,
+        vapiCallIdRef.current || undefined
+      );
       if (result.debrief) {
         localStorage.setItem('debrief', JSON.stringify(result.debrief));
         localStorage.setItem('last_debrief', JSON.stringify(result.debrief));

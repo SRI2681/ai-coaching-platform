@@ -4,6 +4,7 @@ from typing import Optional
 from services.supabase_client import supabase
 from services.ai_engine import get_coach_response, score_response
 from services.transcript_analysis import analyze_transcript
+from services.candidate_data import coaching_baseline
 from services.memory_agent import (load_session_context, store_turn,
                                    update_candidate_cdl)
  
@@ -84,7 +85,8 @@ async def voice_inbound(payload: VapiPayload):
         msgs, candidate, fw,
         candidate.get('coach_name', 'Alex'),
         nudge=scores.get('nudge'),
-        cdl=new_cdl
+        cdl=new_cdl,
+        baseline=coaching_baseline(candidate_id),
     )
 
     # Step 9: save the coach's turn

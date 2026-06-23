@@ -138,6 +138,54 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className='bg-white rounded-2xl shadow p-6 mb-6'>
+          <h3 className='text-lg font-bold text-blue-900 mb-3'>Your coaching journey</h3>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3'>
+            <button
+              onClick={() => router.push('/goal-setup')}
+              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
+            >
+              <p className='font-semibold text-gray-800'>1. Goal Setup</p>
+              <p className='text-xs text-gray-500 mt-1'>Define or review your goal</p>
+            </button>
+            <button
+              onClick={() => router.push('/assessment')}
+              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
+            >
+              <p className='font-semibold text-gray-800'>2. Baseline</p>
+              <p className='text-xs text-gray-500 mt-1'>AI diagnostic assessment</p>
+            </button>
+            <button
+              onClick={() => router.push('/action-plan')}
+              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
+            >
+              <p className='font-semibold text-gray-800'>3. Action Plan</p>
+              <p className='text-xs text-gray-500 mt-1'>Milestones & exercises</p>
+            </button>
+            <button
+              onClick={() => router.push('/skill-check')}
+              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
+            >
+              <p className='font-semibold text-gray-800'>4. Skill Check</p>
+              <p className='text-xs text-gray-500 mt-1'>GMAT-style progress test</p>
+            </button>
+            <button
+              onClick={() => router.push('/progress')}
+              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
+            >
+              <p className='font-semibold text-gray-800'>5. Progress</p>
+              <p className='text-xs text-gray-500 mt-1'>Scores & trends</p>
+            </button>
+            <button
+              onClick={() => router.push('/report')}
+              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
+            >
+              <p className='font-semibold text-gray-800'>6. Final Report</p>
+              <p className='text-xs text-gray-500 mt-1'>Journey summary</p>
+            </button>
+          </div>
+        </div>
+
         {lastDebrief?.action_item && (
           <div className='bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6'>
             <p className='text-xs font-semibold uppercase text-amber-700 mb-1'>From your last session</p>

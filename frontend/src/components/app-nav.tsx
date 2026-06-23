@@ -5,6 +5,13 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/profile', label: 'Profile' },
+  { href: '/goal-setup', label: 'Goal Setup' },
+  { href: '/assessment', label: 'Baseline' },
+  { href: '/skill-check', label: 'Skill Check' },
+  { href: '/action-plan', label: 'Action Plan' },
+  { href: '/progress', label: 'Progress' },
+  { href: '/report', label: 'Final Report' },
   { href: '/summary', label: 'Session Summary' },
 ];
 

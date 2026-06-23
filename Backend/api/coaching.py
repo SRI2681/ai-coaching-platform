@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 from services.supabase_client import supabase
 from services.ai_engine import (get_coach_response, generate_session_summary,
                                  create_avatar_session, select_framework)
-from services.memory_agent import (load_candidate_context, store_turn,
-                                   store_session_summary)
+from services.candidate_data import assemble_session_transcript, coaching_baseline
+from services.org_invites import try_accept_pending_invite, accept_invite
+from services.vapi_recordings import fetch_vapi_recording
+from services.memory_agent import load_candidate_context, store_session_summary, store_turn
 from services.cdl_engine import get_cdl_movement
 import bcrypt
 import uuid
@@ -22,6 +25,7 @@ class RegisterRequest(BaseModel):
     role_level: str
     coach_name: str
     primary_goal: str
+    invite_token: Optional[str] = None
 
 @router.post('/register')
 async def register_candidate(req: RegisterRequest):
@@ -41,7 +45,16 @@ async def register_candidate(req: RegisterRequest):
         'primary_goal': req.primary_goal,
         'current_cdl':  1.0,
     }).execute().data[0]
-    return {'candidate_id': candidate['id'], 'message': 'Registration successful'}
+    org_link = None
+    if req.invite_token:
+        org_link = accept_invite(req.invite_token, candidate['id'], req.email)
+    else:
+        org_link = try_accept_pending_invite(candidate['id'], req.email)
+    return {
+        'candidate_id': candidate['id'],
+        'message': 'Registration successful',
+        'org_link': org_link,
+    }
 
 # ── Login ─────────────────────────────────────────────────────────────────────
 
@@ -57,6 +70,7 @@ async def login_candidate(req: LoginRequest):
     candidate = result[0]
     if not bcrypt.checkpw(req.password.encode('utf-8'), candidate['password_hash'].encode('utf-8')):
         raise HTTPException(status_code=401, detail='Invalid email or password')
+    try_accept_pending_invite(candidate['id'], candidate['email'])
     return {
         'candidate_id': candidate['id'],
         'first_name':   candidate['first_name'],
@@ -77,10 +91,13 @@ async def start_session(req: StartRequest):
     if not candidate:
         raise HTTPException(status_code=404, detail='Candidate not found')
 
+    baseline = coaching_baseline(req.candidate_id)
+    goal_text = ctx['goals'][0] if ctx.get('goals') else candidate.get('primary_goal', '')
     framework = select_framework(
         candidate.get('role_level', 'manager'),
-        candidate.get('primary_goal', ''),
-        candidate.get('current_cdl', 1.0)
+        goal_text,
+        candidate.get('current_cdl', 1.0),
+        baseline=baseline,
     )
 
     session = supabase.table('coaching_sessions').insert({
@@ -106,7 +123,8 @@ async def start_session(req: StartRequest):
     opening = get_coach_response(
         messages, candidate, framework,
         candidate.get('coach_name', 'Alex'),
-        cdl=candidate['current_cdl']
+        cdl=candidate['current_cdl'],
+        baseline=baseline,
     )
     store_turn(session_id, req.candidate_id, 1, 'coach', opening,
                cdl_at_turn=candidate['current_cdl'])
@@ -125,10 +143,13 @@ async def start_avatar_session(req: StartRequest):
     if not candidate:
         raise HTTPException(status_code=404, detail='Candidate not found')
  
+    baseline = coaching_baseline(req.candidate_id)
+    goal_text = ctx['goals'][0] if ctx.get('goals') else candidate.get('primary_goal', '')
     framework = select_framework(
         candidate.get('role_level', 'manager'),
-        candidate.get('primary_goal', ''),
-        candidate.get('current_cdl', 1.0)
+        goal_text,
+        candidate.get('current_cdl', 1.0),
+        baseline=baseline,
     )
     session = supabase.table('coaching_sessions').insert({
         'candidate_id':   req.candidate_id,
@@ -160,6 +181,27 @@ async def start_avatar_session(req: StartRequest):
 
 class EndRequest(BaseModel):
     candidate_id: str
+    recording_url: Optional[str] = None
+    vapi_call_id: Optional[str] = None
+
+
+class SessionCallMetaRequest(BaseModel):
+    vapi_call_id: Optional[str] = None
+    recording_url: Optional[str] = None
+
+
+@router.patch('/session/{session_id}/call-meta')
+async def update_session_call_meta(session_id: str, req: SessionCallMetaRequest):
+    update: dict = {}
+    if req.vapi_call_id:
+        update['vapi_call_id'] = req.vapi_call_id
+    if req.recording_url:
+        update['recording_url'] = req.recording_url
+    if not update:
+        return {'updated': False}
+    supabase.table('coaching_sessions').update(update).eq('id', session_id).execute()
+    return {'updated': True, **update}
+
 
 @router.post('/end/{session_id}')
 async def end_session(session_id: str, req: EndRequest):
@@ -193,6 +235,23 @@ async def end_session(session_id: str, req: EndRequest):
         session_id, req.candidate_id,
         cdl_start, cdl_end, movement, framework, summary_data
     )
+
+    recording_url = req.recording_url
+    if not recording_url:
+        call_id = req.vapi_call_id or session.get('vapi_call_id')
+        if call_id:
+            recording_url = fetch_vapi_recording(call_id)
+
+    session_update: dict = {
+        'full_transcript': assemble_session_transcript(turns),
+    }
+    if recording_url:
+        session_update['recording_url'] = recording_url
+    if req.vapi_call_id:
+        session_update['vapi_call_id'] = req.vapi_call_id
+    if session_update.get('full_transcript') or recording_url or req.vapi_call_id:
+        supabase.table('coaching_sessions').update(session_update).eq('id', session_id).execute()
+
     return {
         'debrief': {
             **summary_data,

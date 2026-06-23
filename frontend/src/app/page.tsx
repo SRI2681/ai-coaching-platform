@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { loginCandidate, registerCandidate } from '@/lib/api';
+import { useEffect, useState, type FormEvent, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { loginCandidate, lookupInvite, registerCandidate, acceptInvite } from '@/lib/api';
 
 type AuthMode = 'login' | 'signup';
 
@@ -10,7 +10,17 @@ const inputClassName =
   'w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500';
 
 export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className='min-h-screen flex items-center justify-center'>Loading...</div>}>
+      <AuthPageInner />
+    </Suspense>
+  );
+}
+
+function AuthPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get('invite') || '';
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +29,18 @@ export default function AuthPage() {
   const [primaryGoal, setPrimaryGoal] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [orgName, setOrgName] = useState('');
+
+  useEffect(() => {
+    if (!inviteToken) return;
+    lookupInvite(inviteToken)
+      .then((inv) => {
+        setOrgName(inv.org_name);
+        setEmail(inv.email);
+        setMode('signup');
+      })
+      .catch(() => undefined);
+  }, [inviteToken]);
 
   function persistSession(result: {
     candidate_id: string;
@@ -40,6 +62,9 @@ export default function AuthPage() {
     try {
       const result = await loginCandidate(email, password);
       persistSession(result);
+      if (inviteToken) {
+        await acceptInvite(inviteToken, result.candidate_id).catch(() => undefined);
+      }
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to sign in. Please try again.');
@@ -63,6 +88,7 @@ export default function AuthPage() {
         role_level: 'manager',
         coach_name: 'Alex',
         primary_goal: primaryGoal.trim() || 'Develop leadership skills',
+        invite_token: inviteToken || undefined,
       });
 
       const result = await loginCandidate(email, password);
@@ -85,7 +111,11 @@ export default function AuthPage() {
       <div className='bg-white border border-gray-200 rounded-2xl shadow-lg p-8 w-full max-w-md'>
         <h1 className='text-3xl font-bold text-blue-900 text-center mb-2'>AI Executive Coach</h1>
         <p className='text-gray-500 text-center mb-6'>
-          {mode === 'login' ? 'Sign in to your coaching platform' : 'Create your coaching account'}
+          {orgName
+            ? `Join ${orgName} coaching program`
+            : mode === 'login'
+              ? 'Sign in to your coaching platform'
+              : 'Create your coaching account'}
         </p>
 
         <div className='mb-6 grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1'>
