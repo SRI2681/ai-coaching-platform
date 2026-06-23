@@ -17,10 +17,27 @@ function readLocalDebrief(): SessionDebrief | null {
   const raw = localStorage.getItem('debrief') || localStorage.getItem('last_debrief');
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as SessionDebrief;
+    const parsed = JSON.parse(raw) as SessionDebrief;
+    if (!parsed?.summary_text && !parsed?.action_item) return null;
+    return parsed;
   } catch {
     return null;
   }
+}
+
+function normalizeDebrief(raw: SessionDebrief): SessionDebrief {
+  const cdlStart = Number(raw.cdl_start) || 1;
+  const cdlEnd = Number(raw.cdl_end) || cdlStart;
+  return {
+    ...raw,
+    cdl_start: cdlStart,
+    cdl_end: cdlEnd,
+    cdl_movement: raw.cdl_movement || 'held',
+    summary_text: raw.summary_text || 'Session completed.',
+    key_win: raw.key_win || '—',
+    key_gap: raw.key_gap || '—',
+    action_item: raw.action_item || 'Reflect on this session before your next check-in.',
+  };
 }
 
 export default function SummaryPage() {
@@ -29,6 +46,7 @@ export default function SummaryPage() {
   const [firstName, setFirstName] = useState('');
   const [loading, setLoading] = useState(true);
   const [empty, setEmpty] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const cid = localStorage.getItem('candidate_id');
@@ -40,8 +58,9 @@ export default function SummaryPage() {
 
     const local = readLocalDebrief();
     if (local) {
-      setDebrief(local);
-      localStorage.setItem('last_debrief', JSON.stringify(local));
+      const normalized = normalizeDebrief(local);
+      setDebrief(normalized);
+      localStorage.setItem('last_debrief', JSON.stringify(normalized));
       localStorage.removeItem('debrief');
       setLoading(false);
       return;
@@ -50,13 +69,17 @@ export default function SummaryPage() {
     getLatestSessionSummary(cid)
       .then((result) => {
         if (result.debrief) {
-          setDebrief(result.debrief);
-          localStorage.setItem('last_debrief', JSON.stringify(result.debrief));
+          const normalized = normalizeDebrief(result.debrief);
+          setDebrief(normalized);
+          localStorage.setItem('last_debrief', JSON.stringify(normalized));
         } else {
           setEmpty(true);
         }
       })
-      .catch(() => setEmpty(true))
+      .catch((err) => {
+        setEmpty(true);
+        setError(err instanceof Error ? err.message : 'Unable to load session summary.');
+      })
       .finally(() => setLoading(false));
   }, [router]);
 
@@ -75,8 +98,13 @@ export default function SummaryPage() {
         <div className='max-w-xl mx-auto p-8 text-center'>
           <h1 className='text-2xl font-bold text-blue-900 mb-2'>Session Summary</h1>
           <p className='text-gray-500 mb-6'>
-            Complete a coaching session to see your debrief here.
+            Complete a coaching session and tap <strong>End Session</strong> to see your debrief here.
           </p>
+          {error && (
+            <p className='text-sm text-amber-700 mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3'>
+              {error}
+            </p>
+          )}
           <button
             onClick={() => router.push('/dashboard')}
             className='bg-blue-700 hover:bg-blue-800 text-white rounded-lg px-6 py-3 font-semibold'

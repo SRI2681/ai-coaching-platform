@@ -30,7 +30,6 @@ export default function SessionPage() {
   const [showAnamAvatar, setShowAnamAvatar] = useState(false);
   const [fallback, setFallback] = useState(false);
   const [fallbackReason, setFallbackReason] = useState('');
-  const [framework, setFramework] = useState('GROW');
   const [status, setStatus] = useState('Connecting...');
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -142,7 +141,6 @@ export default function SessionPage() {
     }
 
     setSessionType(type);
-    setFramework(localStorage.getItem('framework') || 'GROW');
     setCdl(parseFloat(localStorage.getItem('current_cdl') || '1.0'));
 
     if (type === 'avatar') {

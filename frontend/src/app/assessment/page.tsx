@@ -42,7 +42,7 @@ function BaselineResults({
 
       {profile?.disc_style && (
         <p className='text-sm text-gray-600'>
-          DISC style: <span className='font-semibold'>{profile.disc_style}</span>
+          Working style: <span className='font-semibold'>{profile.disc_style}</span>
         </p>
       )}
 
@@ -72,7 +72,7 @@ function BaselineResults({
       {profile?.clifton_themes && profile.clifton_themes.length > 0 && (
         <div>
           <p className='text-xs font-semibold uppercase text-purple-700 mb-2'>
-            Clifton-style themes
+            Key themes
           </p>
           <div className='flex flex-wrap gap-2'>
             {profile.clifton_themes.map((theme) => (

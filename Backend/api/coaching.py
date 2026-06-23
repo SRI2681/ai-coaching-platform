@@ -285,10 +285,13 @@ async def end_session(session_id: str, req: EndRequest):
     movement = get_cdl_movement(cdl_start, cdl_end)
     framework = session.get('framework_used', 'GROW')
     summary_data = generate_session_summary(turns, framework, cdl_start, cdl_end)
-    store_session_summary(
-        session_id, req.candidate_id,
-        cdl_start, cdl_end, movement, framework, summary_data
-    )
+    try:
+        store_session_summary(
+            session_id, req.candidate_id,
+            cdl_start, cdl_end, movement, framework, summary_data
+        )
+    except Exception:
+        pass
 
     recording_url = req.recording_url
     if not recording_url:
@@ -319,34 +322,47 @@ async def end_session(session_id: str, req: EndRequest):
 
 @router.get('/sessions/latest-summary/{candidate_id}')
 async def latest_session_summary(candidate_id: str):
-    rows = (
-        supabase.table('session_summaries')
-        .select(
-            'summary_text, key_win, key_gap, key_insight, action_item, growth_moment, '
-            'cdl_at_start, cdl_at_end, cdl_movement, framework_used, created_at'
+    try:
+        rows = (
+            supabase.table('session_summaries')
+            .select(
+                'summary_text, key_win, key_gap, key_insight, action_item, growth_moment, '
+                'cdl_at_start, cdl_at_end, cdl_movement, framework_used, created_at'
+            )
+            .eq('candidate_id', candidate_id)
+            .order('created_at', desc=True)
+            .limit(1)
+            .execute()
+            .data
+            or []
         )
-        .eq('candidate_id', candidate_id)
-        .order('created_at', desc=True)
-        .limit(1)
-        .execute()
-        .data
-        or []
-    )
+    except Exception:
+        rows = (
+            supabase.table('session_summaries')
+            .select('*')
+            .eq('candidate_id', candidate_id)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+
     if not rows:
         raise HTTPException(status_code=404, detail='No session summary found yet.')
     row = rows[0]
+    cdl_start = float(row.get('cdl_at_start') or 1.0)
+    cdl_end = float(row.get('cdl_at_end') or cdl_start)
+    movement = row.get('cdl_movement') or 'held'
     return {
         'debrief': {
-            'summary_text': row.get('summary_text') or '',
-            'key_win': row.get('key_win') or '',
-            'key_gap': row.get('key_gap') or '',
+            'summary_text': row.get('summary_text') or 'Session completed.',
+            'key_win': row.get('key_win') or '—',
+            'key_gap': row.get('key_gap') or '—',
             'key_insight': row.get('key_insight'),
-            'action_item': row.get('action_item') or '',
+            'action_item': row.get('action_item') or 'Reflect on this session before your next check-in.',
             'growth_moment': row.get('growth_moment'),
-            'cdl_start': row.get('cdl_at_start') or 1.0,
-            'cdl_end': row.get('cdl_at_end') or 1.0,
-            'cdl_movement': row.get('cdl_movement') or 'held',
-            'framework': row.get('framework_used'),
-            'completed_at': row.get('created_at'),
+            'cdl_start': cdl_start,
+            'cdl_end': cdl_end,
+            'cdl_movement': movement,
         }
     }

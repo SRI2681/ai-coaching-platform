@@ -145,13 +145,10 @@ export default function CandidateProfilePage() {
                       </ul>
                     </div>
                   ) : null}
-                  <p className='text-xs text-gray-400'>
-                    Baseline drives coaching framework selection (GROW, OSKAR, CLEAR, WOOP, STEPPA, and more).
-                  </p>
                 </div>
               ) : (
                 <p className='text-gray-500 text-sm'>
-                  Complete your baseline assessment to unlock personalized coaching frameworks.
+                  Complete your baseline assessment to unlock personalized coaching.
                 </p>
               )}
             </section>
@@ -179,7 +176,7 @@ export default function CandidateProfilePage() {
                   {profile.sessions.map((s) => (
                     <li key={s.id} className='py-3 flex justify-between items-center text-sm'>
                       <div>
-                        <span className='font-medium text-gray-800'>{s.framework}</span>
+                        <span className='font-medium text-gray-800'>Coaching session</span>
                         {s.completedAt && (
                           <span className='text-gray-400 ml-2'>
                             {new Date(s.completedAt).toLocaleDateString()}
