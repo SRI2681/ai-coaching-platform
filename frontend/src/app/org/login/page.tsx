@@ -17,6 +17,8 @@ export default function OrgLoginPage() {
     const orgId = localStorage.getItem('org_id');
     if (adminId && orgId) {
       router.push('/org/roster');
+    } else {
+      router.push('/?portal=organization');
     }
   }, [router]);
 
@@ -97,7 +99,10 @@ export default function OrgLoginPage() {
         </form>
 
         <p className='text-center text-sm text-slate-500 mt-4'>
-          New organization?{' '}
+          <a href='/' className='text-slate-900 underline font-medium'>
+            Back to unified login
+          </a>
+          {' · '}
           <a href='/org/onboarding' className='text-slate-900 underline font-medium'>
             Start onboarding
           </a>

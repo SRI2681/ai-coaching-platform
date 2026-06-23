@@ -29,13 +29,14 @@ class RegisterRequest(BaseModel):
 
 @router.post('/register')
 async def register_candidate(req: RegisterRequest):
-    existing = supabase.table('candidates').select('id').eq('email', req.email).execute().data
+    email = req.email.strip().lower()
+    existing = supabase.table('candidates').select('id').eq('email', email).execute().data
     if existing:
         raise HTTPException(status_code=400, detail='Email already registered')
     hashed = bcrypt.hashpw(req.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     candidate = supabase.table('candidates').insert({
         'id':           str(uuid.uuid4()),
-        'email':        req.email,
+        'email':        email,
         'password_hash': hashed,
         'first_name':   req.first_name,
         'last_name':    req.last_name,
@@ -47,9 +48,9 @@ async def register_candidate(req: RegisterRequest):
     }).execute().data[0]
     org_link = None
     if req.invite_token:
-        org_link = accept_invite(req.invite_token, candidate['id'], req.email)
+        org_link = accept_invite(req.invite_token, candidate['id'], email)
     else:
-        org_link = try_accept_pending_invite(candidate['id'], req.email)
+        org_link = try_accept_pending_invite(candidate['id'], email)
     return {
         'candidate_id': candidate['id'],
         'message': 'Registration successful',
@@ -64,10 +65,31 @@ class LoginRequest(BaseModel):
 
 @router.post('/login')
 async def login_candidate(req: LoginRequest):
-    result = supabase.table('candidates').select('*').eq('email', req.email).execute().data
+    email = req.email.strip().lower()
+    result = supabase.table('candidates').select('*').eq('email', email).execute().data
     if not result:
+        pending = (
+            supabase.table('org_invites')
+            .select('id')
+            .eq('email', email)
+            .eq('status', 'pending')
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        if pending:
+            raise HTTPException(
+                status_code=401,
+                detail='No account yet. You were invited — switch to Sign Up to create your password.',
+            )
         raise HTTPException(status_code=401, detail='Invalid email or password')
     candidate = result[0]
+    if not candidate.get('password_hash'):
+        raise HTTPException(
+            status_code=401,
+            detail='Account has no password set. Use Sign Up or reset via your invite link.',
+        )
     if not bcrypt.checkpw(req.password.encode('utf-8'), candidate['password_hash'].encode('utf-8')):
         raise HTTPException(status_code=401, detail='Invalid email or password')
     try_accept_pending_invite(candidate['id'], candidate['email'])

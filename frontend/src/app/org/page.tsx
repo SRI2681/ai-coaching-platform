@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function OrgIndexPage() {
-  redirect('/org/login');
+  redirect('/?portal=organization');
 }

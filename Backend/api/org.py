@@ -21,7 +21,7 @@ router = APIRouter()
 class OrgLoginRequest(BaseModel):
     email: str
     password: str
-    organization_id: str
+    organization_id: Optional[str] = None
 
 
 class OrgAdminContext(BaseModel):
@@ -72,13 +72,14 @@ def org_register(req: OrgRegisterRequest):
     org = org_rows[0]
     org_id = org['id']
 
+    admin_email = req.admin_email.strip().lower()
     hashed = bcrypt.hashpw(req.admin_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     admin_rows = (
         supabase.table('org_admins')
         .insert({
             'id': str(uuid.uuid4()),
             'org_id': org_id,
-            'email': req.admin_email.lower(),
+            'email': admin_email,
             'password_hash': hashed,
             'role': 'org_admin',
             'first_name': req.admin_first_name,
@@ -143,31 +144,59 @@ def org_progress_dashboard(org_id: str, admin_id: str):
 
 @router.post('/org/login')
 def org_login(req: OrgLoginRequest):
-    rows = (
-        supabase.table('org_admins')
-        .select('*')
-        .eq('email', req.email)
-        .eq('org_id', req.organization_id)
-        .limit(1)
-        .execute()
-        .data
-        or []
-    )
+    email = req.email.strip().lower()
+    if req.organization_id:
+        rows = (
+            supabase.table('org_admins')
+            .select('*')
+            .eq('email', email)
+            .eq('org_id', req.organization_id)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        if rows and not bcrypt.checkpw(
+            req.password.encode('utf-8'),
+            rows[0]['password_hash'].encode('utf-8'),
+        ):
+            rows = []
+    else:
+        rows = (
+            supabase.table('org_admins')
+            .select('*')
+            .eq('email', email)
+            .execute()
+            .data
+            or []
+        )
+        matched = []
+        for admin in rows:
+            if admin.get('role') != 'org_admin':
+                continue
+            if bcrypt.checkpw(
+                req.password.encode('utf-8'),
+                admin['password_hash'].encode('utf-8'),
+            ):
+                matched.append(admin)
+        if len(matched) > 1:
+            raise HTTPException(
+                status_code=400,
+                detail='Multiple organizations found for this email. Enter your Organization ID.',
+            )
+        rows = matched[:1]
+
     if not rows:
-        raise HTTPException(status_code=401, detail='Invalid credentials or organization.')
+        raise HTTPException(status_code=401, detail='Invalid email or password')
     admin = rows[0]
     if admin.get('role') != 'org_admin':
         raise HTTPException(status_code=403, detail='Org admin access required.')
-    if not bcrypt.checkpw(
-        req.password.encode('utf-8'),
-        admin['password_hash'].encode('utf-8'),
-    ):
-        raise HTTPException(status_code=401, detail='Invalid credentials or organization.')
 
+    org_id = admin['org_id']
     org = (
         supabase.table('organizations')
         .select('id, name, plan')
-        .eq('id', req.organization_id)
+        .eq('id', org_id)
         .limit(1)
         .execute()
         .data
@@ -177,7 +206,7 @@ def org_login(req: OrgLoginRequest):
 
     return {
         'admin_id': admin['id'],
-        'org_id': admin['org_id'],
+        'org_id': org_id,
         'org_name': org_name,
         'first_name': admin.get('first_name', ''),
         'role': admin['role'],

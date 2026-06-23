@@ -507,15 +507,41 @@ const THEMES = [
 
 export { THEMES as ORG_GOAL_THEMES };
 
-export async function loginOrgAdmin(email: string, password: string, organizationId: string) {
+export async function loginOrgAdmin(email: string, password: string, organizationId?: string) {
   return request<OrgLoginResponse>('/api/org/login', {
     method: 'POST',
     body: JSON.stringify({
       email,
       password,
-      organization_id: organizationId,
+      organization_id: organizationId || undefined,
     }),
   });
+}
+
+export interface PlatformLoginResponse {
+  admin_id: string;
+  first_name: string;
+  role: string;
+}
+
+export interface PlatformOverview {
+  organizationCount: number;
+  candidateCount: number;
+  sessionCount: number;
+  pendingInvites: number;
+}
+
+export async function loginPlatformAdmin(email: string, password: string) {
+  return request<PlatformLoginResponse>('/api/admin/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function getPlatformOverview(adminId: string) {
+  return request<PlatformOverview>(
+    `/api/admin/overview?admin_id=${encodeURIComponent(adminId)}`
+  );
 }
 
 export async function getOrgRoster(orgId: string, adminId: string) {
