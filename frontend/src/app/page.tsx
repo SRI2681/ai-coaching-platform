@@ -103,7 +103,7 @@ function AuthPageInner() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to sign in.';
       setError(message);
-      if (message.toLowerCase().includes('sign up')) {
+      if (message.toLowerCase().includes('sign up') || message.toLowerCase().includes('no password')) {
         setMode('signup');
       }
     } finally {
@@ -132,7 +132,11 @@ function AuthPageInner() {
       persistCandidateSession(result);
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create account.');
+      const message = err instanceof Error ? err.message : 'Unable to create account.';
+      setError(message);
+      if (message.toLowerCase().includes('sign in')) {
+        setMode('login');
+      }
     } finally {
       setLoading(false);
     }
@@ -260,7 +264,8 @@ function AuthPageInner() {
                   {loading ? 'Signing in...' : 'Sign In as Candidate'}
                 </button>
                 <p className='text-xs text-gray-500 text-center'>
-                  Invited by your company? Use <strong>Sign Up</strong> first to set your password.
+                  Invited by your company? Use <strong>Sign Up</strong> to set your password.
+                  If you see &quot;already registered&quot;, try <strong>Sign In</strong> or Sign Up again to finish setup.
                 </p>
               </form>
             ) : (

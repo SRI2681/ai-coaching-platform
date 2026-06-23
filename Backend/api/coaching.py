@@ -5,6 +5,7 @@ from services.supabase_client import supabase
 from services.ai_engine import (get_coach_response, generate_session_summary,
                                  create_avatar_session, select_framework)
 from services.candidate_data import assemble_session_transcript, coaching_baseline
+from services.candidate_auth import find_candidate_by_email, hash_password, normalize_email, verify_password
 from services.org_invites import try_accept_pending_invite, accept_invite
 from services.vapi_recordings import fetch_vapi_recording
 from services.memory_agent import load_candidate_context, store_session_summary, store_turn
@@ -29,23 +30,46 @@ class RegisterRequest(BaseModel):
 
 @router.post('/register')
 async def register_candidate(req: RegisterRequest):
-    email = req.email.strip().lower()
-    existing = supabase.table('candidates').select('id').eq('email', email).execute().data
+    email = normalize_email(req.email)
+    existing = find_candidate_by_email(email)
+    hashed = hash_password(req.password)
+
     if existing:
-        raise HTTPException(status_code=400, detail='Email already registered')
-    hashed = bcrypt.hashpw(req.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    candidate = supabase.table('candidates').insert({
-        'id':           str(uuid.uuid4()),
-        'email':        email,
-        'password_hash': hashed,
-        'first_name':   req.first_name,
-        'last_name':    req.last_name,
-        'role_title':   req.role_title,
-        'role_level':   req.role_level,
-        'coach_name':   req.coach_name,
-        'primary_goal': req.primary_goal,
-        'current_cdl':  1.0,
-    }).execute().data[0]
+        if existing.get('password_hash'):
+            raise HTTPException(
+                status_code=400,
+                detail='Email already registered. Sign in with your password instead.',
+            )
+        # Complete a legacy / invite-only row that has no usable password yet.
+        candidate = (
+            supabase.table('candidates')
+            .update({
+                'email': email,
+                'password_hash': hashed,
+                'first_name': req.first_name,
+                'last_name': req.last_name,
+                'role_title': req.role_title,
+                'role_level': req.role_level,
+                'coach_name': req.coach_name,
+                'primary_goal': req.primary_goal,
+            })
+            .eq('id', existing['id'])
+            .execute()
+            .data[0]
+        )
+    else:
+        candidate = supabase.table('candidates').insert({
+            'id':           str(uuid.uuid4()),
+            'email':        email,
+            'password_hash': hashed,
+            'first_name':   req.first_name,
+            'last_name':    req.last_name,
+            'role_title':   req.role_title,
+            'role_level':   req.role_level,
+            'coach_name':   req.coach_name,
+            'primary_goal': req.primary_goal,
+            'current_cdl':  1.0,
+        }).execute().data[0]
     org_link = None
     if req.invite_token:
         org_link = accept_invite(req.invite_token, candidate['id'], email)
@@ -65,34 +89,42 @@ class LoginRequest(BaseModel):
 
 @router.post('/login')
 async def login_candidate(req: LoginRequest):
-    email = req.email.strip().lower()
-    result = supabase.table('candidates').select('*').eq('email', email).execute().data
-    if not result:
-        pending = (
-            supabase.table('org_invites')
-            .select('id')
-            .eq('email', email)
-            .eq('status', 'pending')
-            .limit(1)
-            .execute()
-            .data
-            or []
-        )
+    email = normalize_email(req.email)
+    candidate = find_candidate_by_email(email)
+    if not candidate:
+        try:
+            pending = (
+                supabase.table('org_invites')
+                .select('id')
+                .eq('email', email)
+                .eq('status', 'pending')
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+        except Exception:
+            pending = []
         if pending:
             raise HTTPException(
                 status_code=401,
                 detail='No account yet. You were invited — switch to Sign Up to create your password.',
             )
         raise HTTPException(status_code=401, detail='Invalid email or password')
-    candidate = result[0]
+
     if not candidate.get('password_hash'):
         raise HTTPException(
             status_code=401,
-            detail='Account has no password set. Use Sign Up or reset via your invite link.',
+            detail='No password set yet. Switch to Sign Up to finish creating your account.',
         )
-    if not bcrypt.checkpw(req.password.encode('utf-8'), candidate['password_hash'].encode('utf-8')):
+    if not verify_password(req.password, candidate.get('password_hash')):
         raise HTTPException(status_code=401, detail='Invalid email or password')
-    try_accept_pending_invite(candidate['id'], candidate['email'])
+
+    try:
+        try_accept_pending_invite(candidate['id'], email)
+    except Exception:
+        pass
+
     return {
         'candidate_id': candidate['id'],
         'first_name':   candidate['first_name'],

@@ -83,14 +83,18 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     response = await fetch(`${apiBase}${path}`, {
       ...init,
+      mode: 'cors',
       headers: {
         ...defaultHeaders,
         ...(init.headers ?? {})
       }
     });
-  } catch {
+  } catch (err) {
+    const hint = err instanceof Error ? err.message : '';
     throw new Error(
-      'Unable to reach the server. Please check your internet connection and try again.'
+      hint
+        ? `Unable to reach the server (${hint}). Check your connection or try again in a moment.`
+        : 'Unable to reach the server. Please check your internet connection and try again.'
     );
   }
 
