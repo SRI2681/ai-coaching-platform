@@ -8,11 +8,10 @@ const NAV_LINKS = [
   { href: '/profile', label: 'Profile' },
   { href: '/goal-setup', label: 'Goal Setup' },
   { href: '/assessment', label: 'Baseline' },
-  { href: '/skill-check', label: 'Skill Check' },
   { href: '/action-plan', label: 'Action Plan' },
-  { href: '/progress', label: 'Progress' },
-  { href: '/report', label: 'Final Report' },
-  { href: '/summary', label: 'Session Summary' },
+  { href: '/skill-check', label: 'Skill Check' },
+  { href: '/progress', label: 'Progress Achieved' },
+  { href: '/summary', label: 'Previous Session Summary' },
 ];
 
 export default function AppNav({ firstName }: { firstName?: string }) {
@@ -23,7 +22,7 @@ export default function AppNav({ firstName }: { firstName?: string }) {
     <nav className='bg-blue-900 text-white px-8 py-4 flex justify-between items-center'>
       <div className='flex items-center gap-6'>
         <span className='text-xl font-bold shrink-0'>AI Executive Coach</span>
-        <div className='flex gap-4 text-sm'>
+        <div className='flex gap-4 text-sm flex-wrap'>
           {NAV_LINKS.map(({ href, label }) => (
             <Link
               key={href}

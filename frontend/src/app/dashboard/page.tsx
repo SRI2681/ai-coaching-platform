@@ -138,7 +138,7 @@ export default function DashboardPage() {
 
         <div className='bg-white rounded-2xl shadow p-6 mb-6'>
           <h3 className='text-lg font-bold text-blue-900 mb-3'>Your coaching journey</h3>
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3'>
             <button
               onClick={() => router.push('/goal-setup')}
               className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
@@ -171,15 +171,8 @@ export default function DashboardPage() {
               onClick={() => router.push('/progress')}
               className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
             >
-              <p className='font-semibold text-gray-800'>5. Progress</p>
-              <p className='text-xs text-gray-500 mt-1'>Scores & trends</p>
-            </button>
-            <button
-              onClick={() => router.push('/report')}
-              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
-            >
-              <p className='font-semibold text-gray-800'>6. Final Report</p>
-              <p className='text-xs text-gray-500 mt-1'>Journey summary</p>
+              <p className='font-semibold text-gray-800'>5. Progress Achieved</p>
+              <p className='text-xs text-gray-500 mt-1'>Scores, trends & report</p>
             </button>
           </div>
         </div>
@@ -192,7 +185,7 @@ export default function DashboardPage() {
               onClick={() => router.push('/summary')}
               className='text-sm font-semibold text-amber-800 hover:text-amber-900'
             >
-              View full session summary →
+              View previous session summary →
             </button>
           </div>
         )}

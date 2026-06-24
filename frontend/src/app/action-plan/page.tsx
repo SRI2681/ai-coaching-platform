@@ -11,6 +11,7 @@ import {
   type ActionPlan,
   type AssessmentResult,
 } from '@/lib/api';
+import { downloadActionPlanExcel } from '@/lib/export-action-plan';
 
 const KIND_LABELS: Record<string, string> = {
   milestone: 'Milestone',
@@ -156,8 +157,17 @@ export default function ActionPlanPage() {
                   <p className='text-sm text-gray-500'>Completion</p>
                   <p className='text-2xl font-bold text-blue-900'>{completionPct}%</p>
                 </div>
-                <div className='text-sm text-gray-500'>
-                  {completed} of {items.length} items done
+                <div className='flex items-center gap-3'>
+                  <div className='text-sm text-gray-500'>
+                    {completed} of {items.length} items done
+                  </div>
+                  <button
+                    type='button'
+                    onClick={() => downloadActionPlanExcel(plan, items, firstName)}
+                    className='rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 hover:bg-blue-100'
+                  >
+                    Download Excel
+                  </button>
                 </div>
               </div>
               <div className='w-full bg-gray-100 rounded-full h-3 mb-4'>

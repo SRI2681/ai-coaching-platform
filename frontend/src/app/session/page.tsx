@@ -213,16 +213,31 @@ export default function SessionPage() {
   async function handleEndSession() {
     setEnding(true);
     setError('');
+    setStatus('Ending session and saving recording...');
+
+    const sessionId = localStorage.getItem('session_id');
+    const candidateId = localStorage.getItem('candidate_id');
+    if (!sessionId || !candidateId) {
+      router.push('/dashboard');
+      return;
+    }
+
     vapiRef.current?.stop();
     anamRef.current?.stopStreaming();
     anamRef.current = null;
 
+    // Vapi sends end-of-call-report with recording URL asynchronously after stop().
+    const deadline = Date.now() + 8000;
+    while (Date.now() < deadline && !recordingUrlRef.current && vapiCallIdRef.current) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+
     try {
-      const sessionId = localStorage.getItem('session_id');
-      const candidateId = localStorage.getItem('candidate_id');
-      if (!sessionId || !candidateId) {
-        router.push('/dashboard');
-        return;
+      if (recordingUrlRef.current) {
+        await updateSessionCallMeta(sessionId, {
+          recording_url: recordingUrlRef.current,
+          vapi_call_id: vapiCallIdRef.current || undefined,
+        }).catch(() => undefined);
       }
 
       const result = await endSession(
@@ -231,11 +246,22 @@ export default function SessionPage() {
         recordingUrlRef.current || undefined,
         vapiCallIdRef.current || undefined
       );
+
       if (result.debrief) {
         localStorage.setItem('debrief', JSON.stringify(result.debrief));
         localStorage.setItem('last_debrief', JSON.stringify(result.debrief));
         localStorage.setItem('current_cdl', String(result.debrief.cdl_end));
       }
+
+      localStorage.setItem(
+        'just_ended_session',
+        JSON.stringify({
+          sessionId: result.session_id || sessionId,
+          recordingUrl: result.recording_url || recordingUrlRef.current || null,
+          debrief: result.debrief,
+          completedAt: new Date().toISOString(),
+        })
+      );
 
       localStorage.removeItem('session_id');
       localStorage.removeItem('session_type');
@@ -269,7 +295,7 @@ export default function SessionPage() {
               Dashboard
             </Link>
             <Link href='/summary' className='text-blue-300 hover:text-white'>
-              Session Summary
+              Previous Sessions
             </Link>
           </div>
         </div>

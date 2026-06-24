@@ -12,6 +12,7 @@ from services.memory_agent import load_candidate_context, store_session_summary,
 from services.cdl_engine import get_cdl_movement
 import bcrypt
 import uuid
+import time
 
 router = APIRouter()
 
@@ -293,31 +294,87 @@ async def end_session(session_id: str, req: EndRequest):
     except Exception:
         pass
 
-    recording_url = req.recording_url
-    if not recording_url:
-        call_id = req.vapi_call_id or session.get('vapi_call_id')
-        if call_id:
+    recording_url = req.recording_url or session.get('recording_url')
+    call_id = req.vapi_call_id or session.get('vapi_call_id')
+    if not recording_url and call_id:
+        for attempt in range(4):
             recording_url = fetch_vapi_recording(call_id)
+            if recording_url:
+                break
+            if attempt < 3:
+                time.sleep(2)
 
     session_update: dict = {
         'full_transcript': assemble_session_transcript(turns),
+        'status': 'completed',
+        'cdl_at_end': cdl_end,
     }
     if recording_url:
         session_update['recording_url'] = recording_url
-    if req.vapi_call_id:
-        session_update['vapi_call_id'] = req.vapi_call_id
-    if session_update.get('full_transcript') or recording_url or req.vapi_call_id:
-        supabase.table('coaching_sessions').update(session_update).eq('id', session_id).execute()
+    if call_id:
+        session_update['vapi_call_id'] = call_id
+    supabase.table('coaching_sessions').update(session_update).eq('id', session_id).execute()
 
     return {
+        'session_id': session_id,
+        'recording_url': recording_url,
         'debrief': {
             **summary_data,
             'cdl_start': cdl_start,
             'cdl_end': cdl_end,
             'cdl_movement': movement,
             'framework': framework,
-        }
+        },
     }
+
+
+@router.get('/sessions/history/{candidate_id}')
+async def session_history(candidate_id: str):
+    """Past completed sessions with recordings and debrief summaries for the candidate."""
+    sessions = (
+        supabase.table('coaching_sessions')
+        .select('id, completed_at, recording_url, cdl_at_start, cdl_at_end, session_type')
+        .eq('candidate_id', candidate_id)
+        .eq('status', 'completed')
+        .order('completed_at', desc=True)
+        .limit(25)
+        .execute()
+        .data
+        or []
+    )
+    summaries = (
+        supabase.table('session_summaries')
+        .select(
+            'session_id, summary_text, key_win, key_gap, action_item, '
+            'cdl_at_start, cdl_at_end, cdl_movement, created_at'
+        )
+        .eq('candidate_id', candidate_id)
+        .order('created_at', desc=True)
+        .limit(25)
+        .execute()
+        .data
+        or []
+    )
+    summary_by_session = {s['session_id']: s for s in summaries if s.get('session_id')}
+
+    items = []
+    for sess in sessions:
+        sid = sess['id']
+        debrief = summary_by_session.get(sid, {})
+        items.append({
+            'sessionId': sid,
+            'completedAt': sess.get('completed_at'),
+            'recordingUrl': sess.get('recording_url'),
+            'sessionType': sess.get('session_type') or 'voice',
+            'cdlStart': sess.get('cdl_at_start'),
+            'cdlEnd': sess.get('cdl_at_end'),
+            'summaryText': debrief.get('summary_text'),
+            'keyWin': debrief.get('key_win'),
+            'keyGap': debrief.get('key_gap'),
+            'actionItem': debrief.get('action_item'),
+            'cdlMovement': debrief.get('cdl_movement'),
+        })
+    return {'sessions': items, 'total': len(items)}
 
 
 @router.get('/sessions/latest-summary/{candidate_id}')

@@ -61,6 +61,8 @@ export interface SessionDebrief {
 
 export interface EndSessionResponse {
   debrief: SessionDebrief;
+  session_id?: string;
+  recording_url?: string | null;
 }
 
 export interface TeamAnalytics {
@@ -169,6 +171,26 @@ export async function endSession(
 export async function getLatestSessionSummary(candidateId: string) {
   return request<EndSessionResponse>(
     `/api/coaching/sessions/latest-summary/${encodeURIComponent(candidateId)}`
+  );
+}
+
+export interface SessionHistoryItem {
+  sessionId: string;
+  completedAt?: string;
+  recordingUrl?: string | null;
+  sessionType: string;
+  cdlStart?: number;
+  cdlEnd?: number;
+  summaryText?: string;
+  keyWin?: string;
+  keyGap?: string;
+  actionItem?: string;
+  cdlMovement?: string;
+}
+
+export async function getSessionHistory(candidateId: string) {
+  return request<{ sessions: SessionHistoryItem[]; total: number }>(
+    `/api/coaching/sessions/history/${encodeURIComponent(candidateId)}`
   );
 }
 
