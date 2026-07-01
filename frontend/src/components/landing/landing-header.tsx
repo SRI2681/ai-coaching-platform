@@ -2,7 +2,15 @@
 
 import Link from 'next/link';
 
-export default function LandingHeader({ onGetStarted }: { onGetStarted: () => void }) {
+export default function LandingHeader({
+  onSignIn,
+  onGetStarted,
+  onOrgSignIn,
+}: {
+  onSignIn: () => void;
+  onGetStarted: () => void;
+  onOrgSignIn: () => void;
+}) {
   return (
     <header className='landing-header'>
       <div className='landing-header-inner'>
@@ -22,23 +30,19 @@ export default function LandingHeader({ onGetStarted }: { onGetStarted: () => vo
         </Link>
 
         <nav className='hidden md:flex items-center gap-8 text-sm font-medium text-slate-600'>
-          <a href='#scenarios' className='hover:text-indigo-600 transition-colors'>
-            Practice scenarios
+          <a href='#scenarios' className='landing-nav-link'>
+            Scenarios
           </a>
-          <a href='#how-it-works' className='hover:text-indigo-600 transition-colors'>
-            How it works
+          <a href='#how-it-works' className='landing-nav-link'>
+            Your journey
           </a>
-          <Link href='/org/onboarding' className='hover:text-indigo-600 transition-colors'>
-            For organizations
-          </Link>
+          <button type='button' onClick={onOrgSignIn} className='landing-nav-link'>
+            Organization login
+          </button>
         </nav>
 
         <div className='flex items-center gap-3'>
-          <button
-            type='button'
-            onClick={onGetStarted}
-            className='hidden sm:inline text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors'
-          >
+          <button type='button' onClick={onSignIn} className='btn-landing-ghost'>
             Sign in
           </button>
           <button type='button' onClick={onGetStarted} className='btn-landing-cta'>
