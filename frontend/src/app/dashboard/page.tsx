@@ -128,12 +128,12 @@ export default function DashboardPage() {
       <div className='card-hero p-8 md:p-10 mb-8 relative'>
         <div className='relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6'>
           <div>
-            <span className='badge badge-gold mb-4'>Your coaching workspace</span>
+            <span className='badge badge-gold mb-4'>Your executive practice studio</span>
             <h1 className='font-display text-3xl md:text-4xl font-bold tracking-tight mb-2'>
               Welcome back, {firstName}
             </h1>
             <p className='text-white/75 text-lg max-w-xl'>
-              Practice leadership conversations with your AI coach and grow at every level.
+              Every session is a rehearsal for the room you&apos;re stepping into. Pick up where you left off.
             </p>
           </div>
           <div className='flex items-center gap-5 shrink-0'>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
         <div className='mb-5'>
           <h2 className='font-display text-xl font-bold text-[var(--brand-navy)]'>Start a coaching session</h2>
           <p className='text-slate-500 text-sm mt-1'>
-            Real-time AI role-play — like practicing with a world-class coach
+            Rehearse the conversations that define your next promotion — board reviews, feedback, influence
           </p>
         </div>
 

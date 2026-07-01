@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useState, type FormEvent, Suspense } from 'react';
+import { useEffect, useState, useCallback, type FormEvent, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import LandingHeader from '@/components/landing/landing-header';
+import ScenarioPreview from '@/components/landing/scenario-preview';
+import HowItWorks from '@/components/landing/how-it-works';
 import {
   acceptInvite,
   loginCandidate,
@@ -197,56 +200,64 @@ function AuthPageInner() {
         ? 'btn-primary btn-accent-violet'
         : 'btn-primary';
 
-  return (
-    <div className='auth-split'>
-      <div className='auth-brand-panel'>
-        <div className='relative z-10 max-w-md'>
-          <div className='flex items-center gap-3 mb-10'>
-            <div className='w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center'>
-              <svg width='22' height='22' viewBox='0 0 32 32' fill='none'>
-                <path
-                  d='M8 24V8l8 9 8-9v16'
-                  stroke='white'
-                  strokeWidth='2.5'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                />
-              </svg>
-            </div>
-            <span className='font-display text-xl font-bold'>AI Executive Coach</span>
-          </div>
-          <h2 className='font-display text-4xl font-bold leading-tight mb-5'>
-            Master leadership through AI-powered practice
-          </h2>
-          <p className='text-white/70 text-lg leading-relaxed mb-10'>
-            Practice high-stakes conversations, receive real-time feedback, and build executive presence —
-            like training with a world-class executive coach.
-          </p>
-          <ul className='space-y-4'>
-            {[
-              'Adaptive coaching that grows with your CDL level',
-              'Voice & avatar sessions with instant debriefs',
-              'Structured journey from baseline to measurable progress',
-            ].map((text) => (
-              <li key={text} className='flex items-start gap-3 text-white/85'>
-                <span className='mt-1 w-5 h-5 rounded-full bg-teal-500/30 flex items-center justify-center shrink-0'>
-                  <svg width='10' height='10' viewBox='0 0 12 12' fill='none'>
-                    <path d='M2 6l3 3 5-5' stroke='#5eead4' strokeWidth='2' strokeLinecap='round' />
-                  </svg>
-                </span>
-                <span className='text-sm leading-relaxed'>{text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+  const scrollToAuth = useCallback(() => {
+    document.getElementById('get-started')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setPortal('candidate');
+    setMode('signup');
+  }, []);
 
-      <div className='auth-form-panel'>
-      <div className='card-premium p-8 w-full max-w-lg'>
-        <h1 className='font-display text-2xl font-bold text-[var(--brand-navy)] text-center mb-1'>
-          Sign in to your account
+  useEffect(() => {
+    if (inviteToken) {
+      setTimeout(() => scrollToAuth(), 300);
+    }
+  }, [inviteToken, scrollToAuth]);
+
+  return (
+    <div className='landing-page'>
+      <LandingHeader onGetStarted={scrollToAuth} />
+
+      <section className='landing-hero'>
+        <h1 className='landing-hero-title'>
+          Aspiring executives{' '}
+          <span className='landing-hero-accent'>lead with confidence</span> after AI coaching with us
         </h1>
-        <p className='text-slate-500 text-center mb-6 text-sm'>Choose how you want to sign in</p>
+        <p className='landing-hero-sub'>
+          Practice boardroom conversations, difficult feedback, and stakeholder influence with a
+          life-like AI executive coach. Build presence, get scored, and grow measurably.
+        </p>
+        <div className='landing-hero-wrap'>
+          <ScenarioPreview onStart={scrollToAuth} />
+        </div>
+
+        <div className='landing-trust-row'>
+          <div className='landing-trust-item'>
+            <div className='landing-trust-val'>5</div>
+            <div className='landing-trust-label'>CDL levels</div>
+          </div>
+          <div className='landing-trust-item'>
+            <div className='landing-trust-val'>9+</div>
+            <div className='landing-trust-label'>Coaching frameworks</div>
+          </div>
+          <div className='landing-trust-item'>
+            <div className='landing-trust-val'>Voice</div>
+            <div className='landing-trust-label'>& avatar sessions</div>
+          </div>
+          <div className='landing-trust-item'>
+            <div className='landing-trust-val'>30d</div>
+            <div className='landing-trust-label'>Action plans</div>
+          </div>
+        </div>
+      </section>
+
+      <HowItWorks />
+
+      <section id='get-started' className='landing-auth'>
+        <div className='landing-auth-inner'>
+          <h2 className='landing-auth-title'>Start your coaching journey</h2>
+          <p className='text-slate-500 text-center text-sm mb-6'>
+            Sign in or create your account to practice live
+          </p>
+          <div className='card-premium p-8'>
 
         <div className='mb-6 grid grid-cols-3 gap-2'>
           {PORTALS.map((p) => (
@@ -373,8 +384,13 @@ function AuthPageInner() {
             </form>
           </>
         )}
-      </div>
-      </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className='landing-footer'>
+        © {new Date().getFullYear()} AI Executive Coach · Built for leaders on the rise
+      </footer>
     </div>
   );
 }
