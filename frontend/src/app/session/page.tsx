@@ -283,27 +283,27 @@ export default function SessionPage() {
     scores.influence !== null;
 
   return (
-    <div className='min-h-screen bg-gray-900 text-white flex flex-col'>
-      <nav className='bg-blue-950 px-8 py-4 flex justify-between items-center gap-4'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-950 via-[#0c1b3a] to-indigo-950 text-white flex flex-col'>
+      <nav className='bg-[#0c1b3a]/90 backdrop-blur-md border-b border-white/10 px-6 md:px-8 py-4 flex justify-between items-center gap-4'>
         <div className='flex items-center gap-6'>
           <div>
-            <h1 className='text-xl font-bold'>Live Coaching Session</h1>
-            <p className='text-blue-300 text-xs mt-0.5 capitalize'>{sessionType} session</p>
+            <h1 className='font-display text-xl font-bold tracking-tight'>Live Coaching Session</h1>
+            <p className='text-indigo-300 text-xs mt-0.5 capitalize'>{sessionType} session</p>
           </div>
           <div className='hidden sm:flex gap-4 text-sm'>
-            <Link href='/dashboard' className='text-blue-300 hover:text-white'>
+            <Link href='/dashboard' className='text-white/60 hover:text-white transition-colors'>
               Dashboard
             </Link>
-            <Link href='/summary' className='text-blue-300 hover:text-white'>
-              Previous Sessions
+            <Link href='/summary' className='text-white/60 hover:text-white transition-colors'>
+              Sessions
             </Link>
           </div>
         </div>
-        <span className='text-blue-300 text-sm text-center flex-1'>{status}</span>
+        <span className='text-indigo-200 text-sm text-center flex-1 hidden md:block'>{status}</span>
         <button
           onClick={handleEndSession}
           disabled={ending}
-          className='bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 shrink-0'
+          className='bg-red-600/90 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 shrink-0 shadow-lg shadow-red-900/30'
         >
           {ending ? 'Ending...' : 'End Session'}
         </button>
@@ -340,7 +340,7 @@ export default function SessionPage() {
           )}
         </div>
 
-        <div className='w-full lg:w-80 bg-gray-800 p-6 flex flex-col gap-4 overflow-y-auto'>
+        <div className='w-full lg:w-80 bg-slate-900/80 backdrop-blur border-l border-white/10 p-6 flex flex-col gap-4 overflow-y-auto'>
           <div>
             <p className='text-gray-400 text-xs uppercase mb-1'>Coaching Level</p>
             <p className='text-2xl font-bold text-blue-300'>CDL {cdl.toFixed(1)}</p>

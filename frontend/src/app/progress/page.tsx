@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AppNav from '@/components/app-nav';
+import PageShell, { PageHeader } from '@/components/page-shell';
 import {
   generateReport,
   getProgressMetrics,
@@ -166,19 +166,17 @@ export default function ProgressAchievedPage() {
   const deltaLabel = delta > 0 ? `+${delta}` : String(delta);
 
   return (
-    <div className='min-h-screen bg-gray-50 print:bg-white'>
-      <div className='print:hidden'>
-        <AppNav firstName={firstName} />
-      </div>
-
-      <div className='max-w-4xl mx-auto p-8 print:p-0'>
-        <div className='print:hidden mb-6'>
-          <h1 className='text-2xl font-bold text-blue-900 mb-1'>Progress Achieved</h1>
-          <p className='text-gray-500'>
-            {metrics?.goalTitle
-              ? `Your growth toward: ${metrics.goalTitle}`
-              : 'Scores, trends, and your coaching journey report.'}
-          </p>
+    <PageShell firstName={firstName} wide>
+        <div className='print:hidden'>
+          <PageHeader
+            title='Progress Achieved'
+            subtitle={
+              metrics?.goalTitle
+                ? `Your growth toward: ${metrics.goalTitle}`
+                : 'Scores, trends, and your coaching journey report.'
+            }
+            badge='Your report'
+          />
         </div>
 
         {error && (
@@ -284,22 +282,21 @@ export default function ProgressAchievedPage() {
 
             <button
               onClick={() => router.push('/dashboard')}
-              className='w-full print:hidden bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-3 font-semibold'
+              className='btn-primary print:hidden'
             >
               Back to Dashboard
             </button>
           </div>
         ) : null}
-      </div>
-    </div>
+    </PageShell>
   );
 }
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className='bg-white rounded-2xl shadow p-5'>
-      <p className='text-xs font-semibold uppercase text-gray-500 mb-1'>{label}</p>
-      <p className='text-2xl font-bold text-blue-900'>{value}</p>
+    <div className='card-premium p-5'>
+      <p className='text-xs font-semibold uppercase text-slate-500 mb-1'>{label}</p>
+      <p className='text-2xl font-bold text-slate-900 font-display'>{value}</p>
       {sub && <p className='text-sm text-gray-500 mt-1'>{sub}</p>}
     </div>
   );

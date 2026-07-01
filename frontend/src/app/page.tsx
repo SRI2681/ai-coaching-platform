@@ -21,8 +21,7 @@ const PORTALS: { id: PortalType; label: string; description: string }[] = [
   { id: 'admin', label: 'Platform Admin', description: 'Platform operations' },
 ];
 
-const inputClassName =
-  'w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500';
+const inputClassName = 'input-premium';
 
 export default function AuthPage() {
   return (
@@ -193,16 +192,61 @@ function AuthPageInner() {
 
   const accentBtn =
     portalTheme === 'slate'
-      ? 'bg-slate-900 hover:bg-slate-800'
+      ? 'btn-primary !bg-gradient-to-r !from-slate-800 !to-slate-900 !shadow-slate-500/30'
       : portalTheme === 'violet'
-        ? 'bg-violet-700 hover:bg-violet-800'
-        : 'bg-blue-700 hover:bg-blue-800';
+        ? 'btn-primary btn-accent-violet'
+        : 'btn-primary';
 
   return (
-    <div className='min-h-screen bg-gray-50 flex items-center justify-center p-4'>
-      <div className='bg-white border border-gray-200 rounded-2xl shadow-lg p-8 w-full max-w-lg'>
-        <h1 className='text-3xl font-bold text-blue-900 text-center mb-2'>AI Executive Coach</h1>
-        <p className='text-gray-500 text-center mb-6'>Choose how you want to sign in</p>
+    <div className='auth-split'>
+      <div className='auth-brand-panel'>
+        <div className='relative z-10 max-w-md'>
+          <div className='flex items-center gap-3 mb-10'>
+            <div className='w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center'>
+              <svg width='22' height='22' viewBox='0 0 32 32' fill='none'>
+                <path
+                  d='M8 24V8l8 9 8-9v16'
+                  stroke='white'
+                  strokeWidth='2.5'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
+              </svg>
+            </div>
+            <span className='font-display text-xl font-bold'>AI Executive Coach</span>
+          </div>
+          <h2 className='font-display text-4xl font-bold leading-tight mb-5'>
+            Master leadership through AI-powered practice
+          </h2>
+          <p className='text-white/70 text-lg leading-relaxed mb-10'>
+            Practice high-stakes conversations, receive real-time feedback, and build executive presence —
+            like training with a world-class executive coach.
+          </p>
+          <ul className='space-y-4'>
+            {[
+              'Adaptive coaching that grows with your CDL level',
+              'Voice & avatar sessions with instant debriefs',
+              'Structured journey from baseline to measurable progress',
+            ].map((text) => (
+              <li key={text} className='flex items-start gap-3 text-white/85'>
+                <span className='mt-1 w-5 h-5 rounded-full bg-teal-500/30 flex items-center justify-center shrink-0'>
+                  <svg width='10' height='10' viewBox='0 0 12 12' fill='none'>
+                    <path d='M2 6l3 3 5-5' stroke='#5eead4' strokeWidth='2' strokeLinecap='round' />
+                  </svg>
+                </span>
+                <span className='text-sm leading-relaxed'>{text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className='auth-form-panel'>
+      <div className='card-premium p-8 w-full max-w-lg'>
+        <h1 className='font-display text-2xl font-bold text-[var(--brand-navy)] text-center mb-1'>
+          Sign in to your account
+        </h1>
+        <p className='text-slate-500 text-center mb-6 text-sm'>Choose how you want to sign in</p>
 
         <div className='mb-6 grid grid-cols-3 gap-2'>
           {PORTALS.map((p) => (
@@ -210,14 +254,14 @@ function AuthPageInner() {
               key={p.id}
               type='button'
               onClick={() => switchPortal(p.id)}
-              className={`rounded-lg border px-2 py-3 text-left transition-colors ${
+              className={`rounded-xl border px-2 py-3 text-left transition-all ${
                 portal === p.id
                   ? portal === 'organization'
-                    ? 'border-slate-900 bg-slate-50'
+                    ? 'border-slate-800 bg-slate-50 shadow-sm ring-1 ring-slate-200'
                     : portal === 'admin'
-                      ? 'border-violet-700 bg-violet-50'
-                      : 'border-blue-700 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-violet-600 bg-violet-50 shadow-sm ring-1 ring-violet-200'
+                      : 'border-indigo-600 bg-indigo-50 shadow-sm ring-1 ring-indigo-200'
+                  : 'border-slate-200 hover:border-slate-300 hover:bg-white'
               }`}
             >
               <div className='text-sm font-semibold text-gray-900'>{p.label}</div>
@@ -260,7 +304,7 @@ function AuthPageInner() {
                 <Field label='Email' type='email' value={email} onChange={setEmail} autoComplete='email' />
                 <Field label='Password' type='password' value={password} onChange={setPassword} autoComplete='current-password' />
                 {error && <ErrorBox message={error} />}
-                <button type='submit' disabled={loading} className={`w-full text-white rounded-lg py-3 font-semibold disabled:opacity-50 ${accentBtn}`}>
+                <button type='submit' disabled={loading} className={`${accentBtn} disabled:opacity-50`}>
                   {loading ? 'Signing in...' : 'Sign In as Candidate'}
                 </button>
                 <p className='text-xs text-gray-500 text-center'>
@@ -278,7 +322,7 @@ function AuthPageInner() {
                 <Field label='Password' type='password' value={password} onChange={setPassword} autoComplete='new-password' minLength={6} />
                 <Field label='Primary coaching goal (optional)' value={primaryGoal} onChange={setPrimaryGoal} placeholder='Develop leadership skills' />
                 {error && <ErrorBox message={error} />}
-                <button type='submit' disabled={loading} className={`w-full text-white rounded-lg py-3 font-semibold disabled:opacity-50 ${accentBtn}`}>
+                <button type='submit' disabled={loading} className={`${accentBtn} disabled:opacity-50`}>
                   {loading ? 'Creating account...' : 'Create Candidate Account'}
                 </button>
               </form>
@@ -301,7 +345,7 @@ function AuthPageInner() {
                 placeholder='Only if you belong to multiple orgs'
               />
               {error && <ErrorBox message={error} />}
-              <button type='submit' disabled={loading} className={`w-full text-white rounded-lg py-3 font-semibold disabled:opacity-50 ${accentBtn}`}>
+              <button type='submit' disabled={loading} className={`${accentBtn} disabled:opacity-50`}>
                 {loading ? 'Signing in...' : 'Sign In as Organization'}
               </button>
             </form>
@@ -323,12 +367,13 @@ function AuthPageInner() {
               <Field label='Email' type='email' value={email} onChange={setEmail} autoComplete='email' />
               <Field label='Password' type='password' value={password} onChange={setPassword} autoComplete='current-password' />
               {error && <ErrorBox message={error} />}
-              <button type='submit' disabled={loading} className={`w-full text-white rounded-lg py-3 font-semibold disabled:opacity-50 ${accentBtn}`}>
+              <button type='submit' disabled={loading} className={`${accentBtn} disabled:opacity-50`}>
                 {loading ? 'Signing in...' : 'Sign In as Platform Admin'}
               </button>
             </form>
           </>
         )}
+      </div>
       </div>
     </div>
   );
@@ -371,9 +416,5 @@ function Field({
 }
 
 function ErrorBox({ message }: { message: string }) {
-  return (
-    <div className='rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
-      {message}
-    </div>
-  );
+  return <div className='alert-error'>{message}</div>;
 }

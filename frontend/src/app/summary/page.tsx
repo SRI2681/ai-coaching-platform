@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import AppNav from '@/components/app-nav';
+import PageShell, { PageHeader } from '@/components/page-shell';
 import { getSessionHistory, type SessionDebrief, type SessionHistoryItem } from '@/lib/api';
 
 function mergeJustEnded(
@@ -95,26 +95,20 @@ function PreviousSessionsInner() {
   }, [router, loadSessions]);
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppNav firstName={firstName} />
+    <PageShell firstName={firstName}>
+        <PageHeader
+          title='Previous Session Summary'
+          subtitle='Recordings and debriefs from your completed coaching sessions.'
+          badge='Session history'
+        />
 
-      <div className='max-w-4xl mx-auto p-8'>
-        <h1 className='text-2xl font-bold text-blue-900 mb-1'>Previous Session Summary</h1>
-        <p className='text-gray-500 mb-6'>
-          Recordings and debriefs from your completed coaching sessions.
-        </p>
-
-        {error && (
-          <div className='mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
-            {error}
-          </div>
-        )}
+        {error && <div className='alert-error mb-4'>{error}</div>}
 
         {loading ? (
-          <p className='text-gray-500'>Loading sessions...</p>
+          <p className='text-slate-500'>Loading sessions...</p>
         ) : sessions.length === 0 ? (
-          <div className='bg-white rounded-2xl shadow p-8 text-center'>
-            <p className='text-gray-600'>No completed sessions yet.</p>
+          <div className='card-premium p-10 text-center'>
+            <p className='text-slate-600'>No completed sessions yet.</p>
           </div>
         ) : (
           <div className='space-y-6'>
@@ -123,8 +117,7 @@ function PreviousSessionsInner() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -135,24 +128,22 @@ function SessionCard({ session, isLatest }: { session: SessionHistoryItem; isLat
 
   return (
     <article
-      className={`bg-white rounded-2xl shadow overflow-hidden ${
-        isLatest ? 'ring-2 ring-blue-200' : ''
+      className={`card-premium overflow-hidden ${
+        isLatest ? 'ring-2 ring-indigo-300' : ''
       }`}
     >
-      <div className='p-5 border-b border-gray-100'>
+      <div className='p-5 border-b border-slate-100'>
         <div className='flex flex-wrap justify-between gap-2'>
           <div>
             {isLatest && (
-              <span className='text-xs font-semibold uppercase text-blue-600 mb-1 block'>
-                Latest session
-              </span>
+              <span className='badge badge-indigo mb-2'>Latest session</span>
             )}
-            <h2 className='font-semibold text-gray-900 capitalize'>
+            <h2 className='font-display font-semibold text-slate-900 capitalize'>
               {session.sessionType} session · {dateLabel}
             </h2>
           </div>
           {session.cdlStart != null && session.cdlEnd != null && (
-            <span className='text-sm text-blue-800 font-medium'>
+            <span className='text-sm text-indigo-700 font-semibold bg-indigo-50 px-3 py-1 rounded-full'>
               CDL {Number(session.cdlStart).toFixed(1)} → {Number(session.cdlEnd).toFixed(1)}
             </span>
           )}
@@ -160,45 +151,45 @@ function SessionCard({ session, isLatest }: { session: SessionHistoryItem; isLat
       </div>
 
       {session.recordingUrl ? (
-        <div className='bg-gray-900 p-4'>
+        <div className='bg-slate-900 p-4'>
           <video
             controls
             preload='metadata'
-            className='w-full max-h-[360px] rounded-lg bg-black'
+            className='w-full max-h-[360px] rounded-xl bg-black'
             src={session.recordingUrl}
           >
             Your browser does not support video playback.
           </video>
-          <p className='text-xs text-gray-400 mt-2'>Session recording</p>
+          <p className='text-xs text-slate-400 mt-2'>Session recording</p>
         </div>
       ) : (
-        <div className='px-5 py-4 bg-gray-50 text-sm text-gray-500 border-b border-gray-100'>
+        <div className='px-5 py-4 bg-slate-50 text-sm text-slate-500 border-b border-slate-100'>
           Recording is still processing. Refresh this page in a moment if you just ended a session.
         </div>
       )}
 
       <div className='p-5 space-y-3 text-sm'>
         {session.summaryText && (
-          <p className='text-gray-700 leading-relaxed'>{session.summaryText}</p>
+          <p className='text-slate-700 leading-relaxed'>{session.summaryText}</p>
         )}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
           {session.keyWin && (
-            <div className='rounded-lg bg-green-50 p-3'>
-              <p className='text-xs font-semibold uppercase text-green-700 mb-1'>Key win</p>
-              <p className='text-gray-800'>{session.keyWin}</p>
+            <div className='rounded-xl bg-emerald-50 border border-emerald-100 p-4'>
+              <p className='text-xs font-semibold uppercase text-emerald-700 mb-1'>Key win</p>
+              <p className='text-slate-800'>{session.keyWin}</p>
             </div>
           )}
           {session.keyGap && (
-            <div className='rounded-lg bg-amber-50 p-3'>
+            <div className='rounded-xl bg-amber-50 border border-amber-100 p-4'>
               <p className='text-xs font-semibold uppercase text-amber-700 mb-1'>Area to develop</p>
-              <p className='text-gray-800'>{session.keyGap}</p>
+              <p className='text-slate-800'>{session.keyGap}</p>
             </div>
           )}
         </div>
         {session.actionItem && (
-          <div className='rounded-lg bg-blue-50 p-3'>
-            <p className='text-xs font-semibold uppercase text-blue-700 mb-1'>Action item</p>
-            <p className='text-gray-800'>{session.actionItem}</p>
+          <div className='rounded-xl bg-indigo-50 border border-indigo-100 p-4'>
+            <p className='text-xs font-semibold uppercase text-indigo-700 mb-1'>Action item</p>
+            <p className='text-slate-800'>{session.actionItem}</p>
           </div>
         )}
       </div>

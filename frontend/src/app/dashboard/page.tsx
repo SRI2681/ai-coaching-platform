@@ -2,11 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AppNav from '@/components/app-nav';
+import PageShell from '@/components/page-shell';
 import { startSession, startAvatarSession, type SessionDebrief } from '@/lib/api';
 
 const CDL_LABELS = ['', 'Foundation', 'Developing', 'Practitioner', 'Advanced', 'Executive'];
-const CDL_COLORS = ['', 'bg-gray-400', 'bg-blue-400', 'bg-blue-600', 'bg-purple-600', 'bg-yellow-500'];
+const CDL_GRADIENTS = [
+  '',
+  'from-slate-500 to-slate-600',
+  'from-blue-500 to-indigo-600',
+  'from-indigo-500 to-violet-600',
+  'from-violet-500 to-purple-600',
+  'from-amber-400 to-orange-500',
+];
+
+const JOURNEY = [
+  { step: 1, title: 'Goal Setup', desc: 'Define your leadership focus', href: '/goal-setup' },
+  { step: 2, title: 'Baseline', desc: 'AI diagnostic assessment', href: '/assessment' },
+  { step: 3, title: 'Action Plan', desc: 'Milestones & exercises', href: '/action-plan' },
+  { step: 4, title: 'Skill Check', desc: 'Adaptive progress check', href: '/skill-check' },
+  { step: 5, title: 'Progress', desc: 'Scores, trends & report', href: '/progress' },
+];
 
 function readLastDebrief(): SessionDebrief | null {
   if (typeof window === 'undefined') return null;
@@ -56,7 +71,6 @@ export default function DashboardPage() {
         router.push('/');
         return;
       }
-
       const result = await startSession(cid, 'voice');
       localStorage.setItem('session_id', result.session_id);
       localStorage.setItem('framework', result.framework);
@@ -82,28 +96,23 @@ export default function DashboardPage() {
         router.push('/');
         return;
       }
-
       const result = await startAvatarSession(cid);
       const useVoiceFallback = result.fallback_mode || !result.session_token;
-
       localStorage.setItem('session_id', result.session_id);
       localStorage.setItem('framework', result.framework);
       localStorage.setItem('session_type', 'avatar');
       localStorage.setItem('current_cdl', String(result.current_cdl));
       localStorage.setItem('fallback_mode', useVoiceFallback ? 'true' : 'false');
-
       if (result.session_token) {
         localStorage.setItem('anam_session_token', result.session_token);
       } else {
         localStorage.removeItem('anam_session_token');
       }
-
       if (result.fallback_reason) {
         localStorage.setItem('fallback_reason', result.fallback_reason);
       } else {
         localStorage.removeItem('fallback_reason');
       }
-
       localStorage.removeItem('coach_opening');
       router.push('/session');
     } catch (err) {
@@ -114,120 +123,147 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppNav firstName={firstName} />
-
-      <div className='max-w-4xl mx-auto p-8'>
-        <div className='bg-white rounded-2xl shadow p-6 mb-6'>
-          <h2 className='text-2xl font-bold text-blue-900 mb-1'>Leader Dashboard</h2>
-          <p className='text-gray-500 mb-4'>Your coaching level adapts as you grow.</p>
-          <div className='flex items-center gap-4'>
+    <PageShell firstName={firstName} wide>
+      {/* Hero welcome */}
+      <div className='card-hero p-8 md:p-10 mb-8 relative'>
+        <div className='relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6'>
+          <div>
+            <span className='badge badge-gold mb-4'>Your coaching workspace</span>
+            <h1 className='font-display text-3xl md:text-4xl font-bold tracking-tight mb-2'>
+              Welcome back, {firstName}
+            </h1>
+            <p className='text-white/75 text-lg max-w-xl'>
+              Practice leadership conversations with your AI coach and grow at every level.
+            </p>
+          </div>
+          <div className='flex items-center gap-5 shrink-0'>
             <div
-              className={`w-16 h-16 rounded-full ${CDL_COLORS[cdlBand]} flex items-center justify-center text-white text-2xl font-bold`}
+              className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${CDL_GRADIENTS[cdlBand]} flex items-center justify-center text-white text-2xl font-bold shadow-lg ring-4 ring-white/20`}
             >
               {cdl.toFixed(1)}
             </div>
             <div>
-              <p className='text-lg font-semibold text-gray-800'>
+              <p className='text-white/60 text-sm font-medium uppercase tracking-wider'>Coaching Level</p>
+              <p className='text-xl font-semibold'>
                 CDL {cdl.toFixed(1)} — {CDL_LABELS[cdlBand]}
               </p>
-              <p className='text-gray-500 text-sm'>Coach: {coachName}</p>
+              <p className='text-white/60 text-sm mt-0.5'>Coach: {coachName}</p>
             </div>
           </div>
         </div>
-
-        <div className='bg-white rounded-2xl shadow p-6 mb-6'>
-          <h3 className='text-lg font-bold text-blue-900 mb-3'>Your coaching journey</h3>
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3'>
-            <button
-              onClick={() => router.push('/goal-setup')}
-              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
-            >
-              <p className='font-semibold text-gray-800'>1. Goal Setup</p>
-              <p className='text-xs text-gray-500 mt-1'>Define or review your goal</p>
-            </button>
-            <button
-              onClick={() => router.push('/assessment')}
-              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
-            >
-              <p className='font-semibold text-gray-800'>2. Baseline</p>
-              <p className='text-xs text-gray-500 mt-1'>AI diagnostic assessment</p>
-            </button>
-            <button
-              onClick={() => router.push('/action-plan')}
-              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
-            >
-              <p className='font-semibold text-gray-800'>3. Action Plan</p>
-              <p className='text-xs text-gray-500 mt-1'>Milestones & exercises</p>
-            </button>
-            <button
-              onClick={() => router.push('/skill-check')}
-              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
-            >
-              <p className='font-semibold text-gray-800'>4. Skill Check</p>
-              <p className='text-xs text-gray-500 mt-1'>Adaptive progress check</p>
-            </button>
-            <button
-              onClick={() => router.push('/progress')}
-              className='text-left rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50'
-            >
-              <p className='font-semibold text-gray-800'>5. Progress Achieved</p>
-              <p className='text-xs text-gray-500 mt-1'>Scores, trends & report</p>
-            </button>
-          </div>
-        </div>
-
-        {lastDebrief?.action_item && (
-          <div className='bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6'>
-            <p className='text-xs font-semibold uppercase text-amber-700 mb-1'>From your last session</p>
-            <p className='text-gray-800 text-sm mb-3'>{lastDebrief.action_item}</p>
-            <button
-              onClick={() => router.push('/summary')}
-              className='text-sm font-semibold text-amber-800 hover:text-amber-900'
-            >
-              View previous session summary →
-            </button>
-          </div>
-        )}
-
-        <h2 className='text-xl font-bold text-gray-800 mb-4'>Start a Coaching Session</h2>
-
-        {error && (
-          <div className='mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
-            {error}
-          </div>
-        )}
-
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div className='bg-white rounded-2xl shadow p-6'>
-            <h3 className='text-lg font-bold text-blue-900 mb-2'>Voice Session</h3>
-            <p className='text-gray-500 text-sm mb-4'>
-              Speak with your AI coach. Voice-only, works on any device.
-            </p>
-            <button
-              onClick={handleStartVoice}
-              disabled={!!loading}
-              className='w-full bg-blue-700 text-white rounded-lg py-3 font-semibold hover:bg-blue-800 disabled:opacity-50'
-            >
-              {loading === 'voice' ? 'Starting...' : 'Start Voice Session'}
-            </button>
-          </div>
-
-          <div className='bg-white rounded-2xl shadow p-6'>
-            <h3 className='text-lg font-bold text-purple-900 mb-2'>Avatar Session</h3>
-            <p className='text-gray-500 text-sm mb-4'>
-              Face-to-face with your AI coach. Requires camera and microphone.
-            </p>
-            <button
-              onClick={handleStartAvatar}
-              disabled={!!loading}
-              className='w-full bg-purple-700 text-white rounded-lg py-3 font-semibold hover:bg-purple-800 disabled:opacity-50'
-            >
-              {loading === 'avatar' ? 'Starting...' : 'Start Avatar Session'}
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+
+      {/* Journey */}
+      <section className='mb-8'>
+        <div className='flex items-end justify-between mb-5'>
+          <div>
+            <h2 className='font-display text-xl font-bold text-[var(--brand-navy)]'>Your coaching journey</h2>
+            <p className='text-slate-500 text-sm mt-1'>Five steps to measurable leadership growth</p>
+          </div>
+        </div>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3'>
+          {JOURNEY.map((item) => (
+            <button
+              key={item.href}
+              onClick={() => router.push(item.href)}
+              className='journey-card'
+            >
+              <span className='journey-step-num'>{item.step}</span>
+              <p className='font-semibold text-slate-800 text-sm'>{item.title}</p>
+              <p className='text-xs text-slate-500 mt-1 leading-snug'>{item.desc}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {lastDebrief?.action_item && (
+        <div className='card-glass p-5 mb-8 border-l-4 border-l-amber-400'>
+          <p className='badge badge-gold mb-2'>From your last session</p>
+          <p className='text-slate-700 text-sm mb-3 leading-relaxed'>{lastDebrief.action_item}</p>
+          <button
+            onClick={() => router.push('/summary')}
+            className='text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors'
+          >
+            View session summary →
+          </button>
+        </div>
+      )}
+
+      {/* Start session */}
+      <section>
+        <div className='mb-5'>
+          <h2 className='font-display text-xl font-bold text-[var(--brand-navy)]'>Start a coaching session</h2>
+          <p className='text-slate-500 text-sm mt-1'>
+            Real-time AI role-play — like practicing with a world-class coach
+          </p>
+        </div>
+
+        {error && <div className='alert-error mb-4'>{error}</div>}
+
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
+          <div className='card-premium overflow-hidden group'>
+            <div className='h-2 bg-gradient-to-r from-indigo-500 to-indigo-600' />
+            <div className='p-6'>
+              <div className='flex items-center gap-3 mb-3'>
+                <span className='w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600'>
+                  <MicIcon />
+                </span>
+                <h3 className='font-display text-lg font-bold text-slate-900'>Voice Session</h3>
+              </div>
+              <p className='text-slate-500 text-sm mb-5 leading-relaxed'>
+                Speak naturally with your AI coach. Voice-only — works on any device, anywhere.
+              </p>
+              <button
+                onClick={handleStartVoice}
+                disabled={!!loading}
+                className='btn-primary'
+              >
+                {loading === 'voice' ? 'Starting...' : 'Start Voice Session'}
+              </button>
+            </div>
+          </div>
+
+          <div className='card-premium overflow-hidden group'>
+            <div className='h-2 bg-gradient-to-r from-violet-500 to-purple-600' />
+            <div className='p-6'>
+              <div className='flex items-center gap-3 mb-3'>
+                <span className='w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600'>
+                  <VideoIcon />
+                </span>
+                <h3 className='font-display text-lg font-bold text-slate-900'>Avatar Session</h3>
+              </div>
+              <p className='text-slate-500 text-sm mb-5 leading-relaxed'>
+                Face-to-face with your AI coach avatar. Requires camera and microphone.
+              </p>
+              <button
+                onClick={handleStartAvatar}
+                disabled={!!loading}
+                className='btn-primary btn-accent-violet'
+              >
+                {loading === 'avatar' ? 'Starting...' : 'Start Avatar Session'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </PageShell>
+  );
+}
+
+function MicIcon() {
+  return (
+    <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+      <path d='M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z' />
+      <path d='M19 10v2a7 7 0 0 1-14 0v-2M12 19v3' />
+    </svg>
+  );
+}
+
+function VideoIcon() {
+  return (
+    <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+      <rect x='2' y='5' width='14' height='14' rx='2' />
+      <path d='m22 7-6 4 6 4V7Z' />
+    </svg>
   );
 }

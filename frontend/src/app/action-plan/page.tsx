@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AppNav from '@/components/app-nav';
+import PageShell, { PageHeader } from '@/components/page-shell';
 import {
   generateActionPlan,
   getActionPlan,
@@ -123,12 +123,11 @@ export default function ActionPlanPage() {
   );
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppNav firstName={firstName} />
-
-      <div className='max-w-3xl mx-auto p-8'>
-        <h1 className='text-2xl font-bold text-blue-900 mb-1'>Your Action Plan</h1>
-        <p className='text-gray-500 mb-6'>30-day coaching roadmap with milestones and exercises.</p>
+    <PageShell firstName={firstName}>
+        <PageHeader
+          title='Your Action Plan'
+          subtitle='30-day coaching roadmap with milestones and exercises.'
+        />
 
         {error && (
           <div className='mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
@@ -222,14 +221,13 @@ export default function ActionPlanPage() {
 
             <button
               onClick={() => router.push('/dashboard')}
-              className='w-full bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-3 font-semibold'
+              className='btn-primary'
             >
               Back to Dashboard
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -247,8 +245,8 @@ function ItemSection({
   if (!items.length) return null;
 
   return (
-    <div className='bg-white rounded-2xl shadow p-6'>
-      <h2 className='text-lg font-bold text-blue-900 mb-4'>{title}</h2>
+    <div className='card-premium p-6'>
+      <h2 className='font-display text-lg font-bold text-slate-900 mb-4'>{title}</h2>
       <ul className='space-y-3'>
         {items.map((item) => (
           <li

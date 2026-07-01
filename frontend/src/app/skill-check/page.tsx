@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AppNav from '@/components/app-nav';
+import PageShell, { PageHeader } from '@/components/page-shell';
 import {
   answerAssessment,
   getAssessmentStatus,
@@ -117,15 +117,12 @@ export default function SkillCheckPage() {
   const progress = result ? PROGRESS_QUESTIONS : answerIndex + 1;
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppNav firstName={firstName} />
-
-      <div className='max-w-2xl mx-auto p-8'>
-        <h1 className='text-2xl font-bold text-blue-900 mb-1'>Goal Skill Check</h1>
-        <p className='text-gray-500 mb-1'>Goal: {goalTitle}</p>
-        <p className='text-sm text-gray-400 mb-6'>
-          Adaptive check measuring skill growth toward your goal since baseline.
-        </p>
+    <PageShell firstName={firstName}>
+        <PageHeader
+          title='Goal Skill Check'
+          subtitle={`Adaptive check measuring skill growth toward: ${goalTitle}`}
+          badge='Progress measurement'
+        />
 
         {error && (
           <div className='mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
@@ -199,7 +196,7 @@ export default function SkillCheckPage() {
               <button
                 onClick={() => handleStart('midpoint')}
                 disabled={starting}
-                className='rounded-lg border border-gray-200 px-4 py-4 text-left hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50'
+                className='journey-card disabled:opacity-50'
               >
                 <p className='font-semibold text-gray-800'>Midpoint check</p>
                 <p className='text-xs text-gray-500 mt-1'>Mid-program skill growth</p>
@@ -207,7 +204,7 @@ export default function SkillCheckPage() {
               <button
                 onClick={() => handleStart('final')}
                 disabled={starting}
-                className='rounded-lg border border-gray-200 px-4 py-4 text-left hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50'
+                className='journey-card disabled:opacity-50'
               >
                 <p className='font-semibold text-gray-800'>Final check</p>
                 <p className='text-xs text-gray-500 mt-1'>End-of-program assessment</p>
@@ -215,7 +212,6 @@ export default function SkillCheckPage() {
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </PageShell>
   );
 }

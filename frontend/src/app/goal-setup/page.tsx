@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AppNav from '@/components/app-nav';
+import PageShell, { PageHeader } from '@/components/page-shell';
 import {
   createGoal,
   getCandidateGoals,
@@ -82,14 +82,11 @@ export default function GoalSetupPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppNav firstName={firstName} />
-
-      <div className='max-w-2xl mx-auto p-8'>
-        <h1 className='text-2xl font-bold text-blue-900 mb-1'>Goal Setup</h1>
-        <p className='text-gray-500 mb-6'>
-          Define what you want to achieve in this coaching program.
-        </p>
+    <PageShell firstName={firstName}>
+        <PageHeader
+          title='Goal Setup'
+          subtitle='Define what you want to achieve in this coaching program.'
+        />
 
         {readOnly && (
           <div className='mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800'>
@@ -106,7 +103,7 @@ export default function GoalSetupPage() {
         {loading ? (
           <p className='text-gray-500'>Loading your goal...</p>
         ) : (
-          <div className='bg-white rounded-2xl shadow p-6 space-y-5'>
+          <div className='card-premium p-6 space-y-5'>
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>Goal title</label>
               <input
@@ -168,7 +165,6 @@ export default function GoalSetupPage() {
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </PageShell>
   );
 }

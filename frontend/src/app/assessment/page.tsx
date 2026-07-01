@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AppNav from '@/components/app-nav';
+import PageShell, { PageHeader } from '@/components/page-shell';
 import {
   answerAssessment,
   generateActionPlan,
@@ -220,17 +220,17 @@ export default function BaselineAssessmentPage() {
     currentQuestion?.competency_lens || currentQuestion?.competency_focus;
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppNav firstName={firstName} />
-
-      <div className='max-w-2xl mx-auto p-8'>
-        <h1 className='text-2xl font-bold text-blue-900 mb-1'>Baseline Skill Assessment</h1>
-        <p className='text-gray-500 mb-1'>Goal: {goalTitle}</p>
-        <p className='text-sm text-gray-400 mb-6'>
-          {!baselineLocked && (
-            <> Question {Math.min(progress, questionTotal)} of {questionTotal} · Tier {tier}</>
-          )}
-        </p>
+    <PageShell firstName={firstName}>
+        <PageHeader
+          title='Baseline Skill Assessment'
+          subtitle={goalTitle ? `Goal: ${goalTitle}` : undefined}
+          badge='Diagnostic'
+        />
+        {!baselineLocked && (
+          <p className='text-sm text-slate-500 mb-6 -mt-4'>
+            Question {Math.min(progress, questionTotal)} of {questionTotal} · Tier {tier}
+          </p>
+        )}
 
         {error && (
           <div className='mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
@@ -271,7 +271,6 @@ export default function BaselineAssessmentPage() {
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </PageShell>
   );
 }

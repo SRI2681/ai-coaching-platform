@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AppNav from '@/components/app-nav';
+import PageShell, { PageHeader } from '@/components/page-shell';
 import { getCandidateProfile, type CandidateProfile } from '@/lib/api';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -37,12 +37,11 @@ export default function CandidateProfilePage() {
   const progress = profile?.progress;
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <AppNav firstName={firstName} />
-
-      <div className='max-w-4xl mx-auto p-8'>
-        <h1 className='text-2xl font-bold text-blue-900 mb-1'>My Profile</h1>
-        <p className='text-gray-500 mb-6'>Your coaching identity, baseline, and session history.</p>
+    <PageShell firstName={firstName} wide>
+        <PageHeader
+          title='My Profile'
+          subtitle='Your coaching identity, baseline, and session history.'
+        />
 
         {error && (
           <div className='mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
@@ -209,8 +208,7 @@ export default function CandidateProfilePage() {
             )}
           </div>
         ) : null}
-      </div>
-    </div>
+    </PageShell>
   );
 }
 
